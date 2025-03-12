@@ -289,46 +289,46 @@ extension Color {
 }
 
 // Placeholder views
-struct AccueilView: View {
-    var body: some View { Text("Page d'accueil").font(.largeTitle) }
-}
+//struct AccueilView: View {
+//    var body: some View { Text("Page d'accueil").font(.largeTitle) }
+//}
 
-struct ModificationSessionView: View {
-    var body: some View { Text("Modification de session").font(.largeTitle) }
-}
+//struct ModificationSessionView: View {
+//    var body: some View { Text("Modification de session").font(.largeTitle) }
+//}
 
-struct GestionUtilisateurView: View {
-    var body: some View { Text("Gestion des utilisateurs").font(.largeTitle) }
-}
+//struct GestionUtilisateurView: View {
+//    var body: some View { Text("Gestion des utilisateurs").font(.largeTitle) }
+//}
 
-struct PreinscriptionView: View {
-    var body: some View { Text("Pré-inscription").font(.largeTitle) }
-}
+//struct PreinscriptionView: View {
+//    var body: some View { Text("Pré-inscription").font(.largeTitle) }
+//}
 
-struct DepotView: View {
-    var body: some View { Text("Dépôt").font(.largeTitle) }
-}
+//struct DepotView: View {
+//    var body: some View { Text("Dépôt").font(.largeTitle) }
+//}
 
-struct RetraitView: View {
-    var body: some View { Text("Retrait").font(.largeTitle) }
-}
+//struct RetraitView: View {
+//    var body: some View { Text("Retrait").font(.largeTitle) }
+//}
 
-struct MiseEnVenteView: View {
-    var body: some View { Text("Mise en vente").font(.largeTitle) }
-}
+//struct MiseEnVenteView: View {
+//   var body: some View { Text("Mise en vente").font(.largeTitle) }
+//}
 
-struct EnregistrerAchatView: View {
-    var body: some View { Text("Enregistrer achat").font(.largeTitle) }
-}
+//struct EnregistrerAchatView: View {
+//    var body: some View { Text("Enregistrer achat").font(.largeTitle) }
+//}
 
-struct PayerVendeurView: View {
-    var body: some View { Text("Payer vendeur").font(.largeTitle) }
-}
+//struct PayerVendeurView: View {
+//    var body: some View { Text("Payer vendeur").font(.largeTitle) }
+//}
 
-struct BilanView: View {
-    var body: some View { Text("Bilan").font(.largeTitle) }
-}
+//struct BilanView: View {
+//    var body: some View { Text("Bilan").font(.largeTitle) }
+//}
 
-struct VendeurDashboardView: View {
-    var body: some View { Text("Tableau de bord vendeur").font(.largeTitle) }
-}
+//struct VendeurDashboardView: View {
+    //var body: some View { Text("Tableau de bord vendeur").font(.largeTitle) }
+//}
