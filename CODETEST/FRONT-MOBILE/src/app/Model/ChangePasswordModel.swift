@@ -1,3 +1,7 @@
+import Foundation
+import Combine
+import SwiftUI
+
 class ChangePasswordViewModel: ObservableObject {
     // Form fields
     @Published var currentPassword = ""

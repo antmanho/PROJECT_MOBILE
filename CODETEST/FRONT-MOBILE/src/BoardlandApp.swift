@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct BoardlandApp: App {
     // Create an AppState instance
-    @StateObject private var appState = AppState()
+    @StateObject private var appState = AppState
     
     // Register custom fonts
     init() {

@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 class AuthService: ObservableObject {
-    private let baseUrl = "http://localhost:3000"
+    private let baseURL = "http://localhost:3000"
     @Published var isLoading = false
     @Published var errorMessage: String?
     
@@ -14,6 +14,38 @@ class AuthService: ObservableObject {
         configuration.httpCookieStorage = .shared
         return URLSession(configuration: configuration)
     }
+    
+    // MARK: - Login Functionality
+    
+    func login(email: String, password: String) -> AnyPublisher<LoginResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/login") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Create login payload
+        let body: [String: String] = [
+            "email": email,
+            "password": password
+        ]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: LoginResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+    
+    // MARK: - Role Verification
     
     // Verify if user has Vendor role
     func verifyVendorRole() -> AnyPublisher<Bool, Error> {
@@ -32,7 +64,7 @@ class AuthService: ObservableObject {
     
     // Generic role verification
     private func verifyRole(endpoint: String) -> AnyPublisher<Bool, Error> {
-        guard let url = URL(string: baseUrl + endpoint) else {
+        guard let url = URL(string: baseURL + endpoint) else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
         
@@ -47,9 +79,52 @@ class AuthService: ObservableObject {
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
+    
+    // MARK: - Password Management
+    
+    func changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String) -> AnyPublisher<PasswordChangeResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/user/change-password") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Request body
+        let body: [String: String] = [
+            "currentPassword": currentPassword,
+            "newPassword": newPassword,
+            "confirmPassword": confirmNewPassword
+        ]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: PasswordChangeResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
 }
 
-// Response type for role verification
+// MARK: - Response Types
+
+struct LoginResponse: Decodable {
+    let success: Bool
+    let message: String?
+    let redirectUrl: String
+}
+
 struct RoleVerificationResponse: Decodable {
     let valid: Bool
+}
+
+struct PasswordChangeResponse: Decodable {
+    let success: Bool
+    let message: String
 }
