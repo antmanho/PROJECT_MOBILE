@@ -7,9 +7,9 @@ struct AppStyles {
     static let backgroundColor = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let textColor = Color.black
     
-    // Styles de texte
-    static let titleStyle = Text.LineStyle(font: .largeTitle)
-    static let subtitleStyle = Text.LineStyle(font: .title2)
+    // Styles de texte (correction de l'erreur)
+    static let titleFont = Font.largeTitle
+    static let subtitleFont = Font.title2
     
     // ViewModifiers réutilisables
     struct CardStyle: ViewModifier {
@@ -26,7 +26,7 @@ struct AppStyles {
         func body(content: Content) -> some View {
             content
                 .padding()
-                .background(primaryColor)
+                .background(AppStyles.primaryColor)
                 .foregroundColor(.white)
                 .cornerRadius(8)
         }
@@ -44,14 +44,7 @@ extension View {
     }
 }
 
-// For properly formatting percentages
-extension FormatStyle where Self == FloatingPointFormatStyle<Double>.Percent {
-    static var percent: Self {
-        .percent.scale(100)
-    }
-}
-
-// Color extension for hex colors
+// Color extension for hex colors (suppression du doublon)
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
