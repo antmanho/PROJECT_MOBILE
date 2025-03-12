@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AcceuilView: View {
+struct AccueilView: View {
     @State private var currentIndex2 = 0
     @State private var currentIndex3 = 0
     private let timer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
