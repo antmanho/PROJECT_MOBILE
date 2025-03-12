@@ -1,0 +1,17 @@
+  ____ _   _ ___ ____  _____ 
+ / ___| | | |_ _|  _ \| ____|
+| |  _| | | || || | | |  _|  
+| |_| | |_| || || |_| | |___ 
+ \____|\___/|___|____/|_____|
+                             
+S
+STEP 1 : 
+npm init (fait un package.json avec tous ce qu'il faut)
+npm install express ( framework pour web)
+...
+
+STEP 2 : 
+npm WEB_SOCKET.js
+
+STEP 3 :
+npm START.js 
