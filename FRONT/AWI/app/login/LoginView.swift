@@ -201,21 +201,6 @@ struct LoginView: View {
     }
 }
 
-// Placeholder views for navigation
-struct SignUpView: View {
-    var body: some View {
-        Text("Inscription")
-            .navigationTitle("Inscription")
-    }
-}
-
-struct ForgotPasswordView: View {
-    var body: some View {
-        Text("Récupération de mot de passe")
-            .navigationTitle("Mot de passe oublié")
-    }
-}
-
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()

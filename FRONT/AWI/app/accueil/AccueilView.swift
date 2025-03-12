@@ -89,16 +89,16 @@ struct ImageSliderView: View {
     }
 }
 
-struct AcceuilView_Previews: PreviewProvider {
+struct AccueilView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             // For iPad Pro
-            AcceuilView()
+            AccueilView()  // Make sure this matches the actual view name
                 .previewDevice(PreviewDevice(rawValue: "iPad Pro (12.9-inch) (6th generation)"))
                 .previewDisplayName("iPad Pro")
             
             // For iPhone
-            AcceuilView()
+            AccueilView()  // Make sure this matches the actual view name
                 .previewDevice(PreviewDevice(rawValue: "iPhone 14 Pro"))
                 .previewDisplayName("iPhone")
                 .previewLayout(.fixed(width: 375, height: 812))

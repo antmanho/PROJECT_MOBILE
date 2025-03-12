@@ -1,85 +1,39 @@
-import Foundation
+import SwiftUI
 import Combine
 
-class ForgotPasswordViewModel: ObservableObject {
-    // Form fields
-    @Published var email = ""
+struct ForgotPasswordView: View {
+    @StateObject private var viewModel = ForgotPasswordViewModel()
+    @Environment(\.presentationMode) var presentationMode
     
-    // Validation errors
-    @Published var emailError: String?
-    @Published var errorMessage: String?
-    
-    // UI state
-    @Published var isLoading = false
-    @Published var showAlert = false
-    @Published var alertTitle = ""
-    @Published var alertMessage = ""
-    @Published var isSuccess = false
-    
-    private var cancellables = Set<AnyCancellable>()
-    private let authService = AuthService()
-    
-    // Validate email
-    private func validateEmail() -> Bool {
-        if email.isEmpty {
-            emailError = "L'email est requis"
-            return false
-        } else if !isValidEmail(email) {
-            emailError = "Format d'email invalide"
-            return false
-        } else {
-            emailError = nil
-            return true
-        }
-    }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
-    }
-    
-    func requestPasswordReset() {
-        // Clear previous errors
-        errorMessage = nil
-        
-        // Validate email
-        guard validateEmail() else {
-            errorMessage = "Veuillez entrer une adresse email valide."
-            return
-        }
-        
-        isLoading = true
-        
-        authService.requestPasswordReset(email: email)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                self?.isLoading = false
+    var body: some View {
+        VStack(spacing: 25) {
+            // Header
+            Text("Mot de passe oublié")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            Text("Entrez votre adresse email pour recevoir un lien de réinitialisation")
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                .padding(.bottom)
+            
+            // Email field
+            VStack(alignment: .leading) {
+                TextField("Email", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
                 
-                if case .failure(let error) = completion {
-                    self?.showError(message: "Erreur lors de la demande de réinitialisation: \(error.localizedDescription)")
-                }
-            } receiveValue: { [weak self] response in
-                if response.success {
-                    self?.showSuccess(title: "Demande envoyée", message: response.message)
-                } else {
-                    self?.showError(message: response.message)
+                if let error = viewModel.emailError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
                 }
             }
-            .store(in: &cancellables)
-    }
-    
-    private func showError(message: String) {
-        alertTitle = "Erreur"
-        alertMessage = message
-        showAlert = true
-        isSuccess = false
-    }
-    
-    private func showSuccess(title: String, message: String) {
-        alertTitle = title
-        alertMessage = message
-        showAlert = true
-        isSuccess = true
+            
+            }
     }
 }

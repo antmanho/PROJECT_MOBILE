@@ -126,38 +126,3 @@ class SignUpViewModel: ObservableObject {
         isSuccess = true
     }
 }
-
-// Add this to AuthService.swift
-extension AuthService {
-    struct RegisterResponse: Decodable {
-        let success: Bool
-        let message: String
-    }
-    
-    func register(email: String, password: String, confirmPassword: String) -> AnyPublisher<RegisterResponse, Error> {
-        guard let url = URL(string: "\(baseURL)/register") else {
-            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body: [String: String] = [
-            "new_email": email,
-            "new_password": password,
-            "confirm_password": confirmPassword
-        ]
-        
-        do {
-            request.httpBody = try JSONEncoder().encode(body)
-        } catch {
-            return Fail(error: error).eraseToAnyPublisher()
-        }
-        
-        return URLSession.shared.dataTaskPublisher(for: request)
-            .map(\.data)
-            .decode(type: RegisterResponse.self, decoder: JSONDecoder())
-            .eraseToAnyPublisher()
-    }
-}

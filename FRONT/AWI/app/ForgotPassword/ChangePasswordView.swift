@@ -135,39 +135,3 @@ struct ChangePasswordView: View {
         }
     }
 }
-
-
-// Add this to AuthService.swift
-extension AuthService {
-    struct ChangePasswordResponse: Decodable {
-        let success: Bool
-        let message: String
-    }
-    
-    func changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String) -> AnyPublisher<ChangePasswordResponse, Error> {
-        guard let url = URL(string: "\(baseURL)/change-password") else {
-            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body: [String: String] = [
-            "currentPassword": currentPassword,
-            "newPassword": newPassword,
-            "confirmPassword": confirmNewPassword
-        ]
-        
-        do {
-            request.httpBody = try JSONEncoder().encode(body)
-        } catch {
-            return Fail(error: error).eraseToAnyPublisher()
-        }
-        
-        return URLSession.shared.dataTaskPublisher(for: request)
-            .map(\.data)
-            .decode(type: ChangePasswordResponse.self, decoder: JSONDecoder())
-            .eraseToAnyPublisher()
-    }
-}
