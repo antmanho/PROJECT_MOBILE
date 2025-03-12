@@ -2,6 +2,9 @@ import SwiftUI
 
 @main
 struct BoardlandApp: App {
+    // Create an AppState instance
+    @StateObject private var appState = AppState()
+    
     // Register custom fonts
     init() {
         registerFonts()
@@ -10,6 +13,7 @@ struct BoardlandApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(appState)  // Provide AppState to the view hierarchy
         }
     }
     

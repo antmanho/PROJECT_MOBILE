@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    // Équivalent au component principal (AppComponent)
+    // Correct declaration without parentheses
     @EnvironmentObject var appState: AppState
     @StateObject private var networkManager = NetworkManager()
     
