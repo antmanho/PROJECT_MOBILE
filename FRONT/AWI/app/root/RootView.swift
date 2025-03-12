@@ -70,7 +70,7 @@ struct RootView: View {
     
     private var topNavbar: some View {
         ZStack {
-            Color(hex: "#333333")
+            
             
             HStack {
                 // Logo
@@ -179,30 +179,30 @@ struct RootView: View {
             return AnyView(ContactView())
         case "connexion":
             return AnyView(LoginView())
-        case "inscription":
-            return AnyView(SignUpView())
-        case "creer-session":
-            return AnyView(CreateSessionView())
-        case "modification-session":
-            return AnyView(ModificationSessionView())
-        case "gestion-utilisateur":
-            return AnyView(GestionUtilisateurView())
-        case "preinscription":
-            return AnyView(PreinscriptionView())
-        case "depot":
-            return AnyView(DepotView())
-        case "retrait":
-            return AnyView(RetraitView())
-        case "mise_en_vente":
-            return AnyView(MiseEnVenteView())
-        case "enregistrer_achat":
-            return AnyView(EnregistrerAchatView())
-        case "check_achat":
-            return AnyView(PayerVendeurView())
-        case "bilan":
-            return AnyView(BilanView())
-        case "vendeur":
-            return AnyView(VendeurDashboardView())
+//        case "inscription":
+//            return AnyView(SignUpView())
+//        case "creer-session":
+//            return AnyView(CreateSessionView())
+//        case "modification-session":
+//            return AnyView(ModificationSessionView())
+//        case "gestion-utilisateur":
+//            return AnyView(GestionUtilisateurView())
+//        case "preinscription":
+//            return AnyView(PreinscriptionView())
+//        case "depot":
+//            return AnyView(DepotView())
+//        case "retrait":
+//            return AnyView(RetraitView())
+//        case "mise_en_vente":
+//            return AnyView(MiseEnVenteView())
+//        case "enregistrer_achat":
+//            return AnyView(EnregistrerAchatView())
+//        case "check_achat":
+//            return AnyView(PayerVendeurView())
+//        case "bilan":
+//            return AnyView(BilanView())
+//        case "vendeur":
+//            return AnyView(VendeurDashboardView())
         default:
             return AnyView(Text("Page non trouvée").font(.largeTitle))
         }
