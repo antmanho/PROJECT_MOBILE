@@ -2,37 +2,69 @@ import Foundation
 import Combine
 
 class AuthService: ObservableObject {
-    private let baseUrl = "http://localhost:3000"
+    private let baseURL = "http://localhost:3000"
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // Session configuration unique
-    private var session: URLSession = {
+    // Network session with credentials support
+    private var session: URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.httpShouldSetCookies = true
         configuration.httpCookieAcceptPolicy = .always
         configuration.httpCookieStorage = .shared
         return URLSession(configuration: configuration)
-    }()
-
-    // Vérifie si l'utilisateur a le rôle vendeur
+    }
+    
+    // MARK: - Login Functionality
+    
+    func login(email: String, password: String) -> AnyPublisher<LoginResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/login") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Create login payload
+        let body: [String: String] = [
+            "email": email,
+            "password": password
+        ]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: LoginResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+    
+    // MARK: - Role Verification
+    
+    // Verify if user has Vendor role
     func verifyVendorRole() -> AnyPublisher<Bool, Error> {
-        verifyRole(endpoint: "/verification_V")
+        return verifyRole(endpoint: "/verification_V")
     }
     
-    // Vérifie si l'utilisateur a le rôle admin
+    // Verify if user has Admin role
     func verifyAdminRole() -> AnyPublisher<Bool, Error> {
-        verifyRole(endpoint: "/verification_A")
+        return verifyRole(endpoint: "/verification_A")
     }
     
-    // Vérifie si l'utilisateur est manager ou admin
+    // Verify if user has either Manager or Admin role
     func verifyManagerOrAdminRole() -> AnyPublisher<Bool, Error> {
-        verifyRole(endpoint: "/verification_G_ou_A")
+        return verifyRole(endpoint: "/verification_G_ou_A")
     }
     
-    // Méthode générique de vérification de rôle
+    // Generic role verification
     private func verifyRole(endpoint: String) -> AnyPublisher<Bool, Error> {
-        guard let url = URL(string: baseUrl + endpoint) else {
+        guard let url = URL(string: baseURL + endpoint) else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
         
@@ -41,25 +73,58 @@ class AuthService: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         return session.dataTaskPublisher(for: request)
-            .tryMap { data, response in
-                guard let httpResponse = response as? HTTPURLResponse, self.httpResponseIsValid(httpResponse) else {
-                    throw URLError(.badServerResponse)
-                }
-                return data
-            }
+            .map(\.data)
             .decode(type: RoleVerificationResponse.self, decoder: JSONDecoder())
             .map { $0.valid }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
-
-    // Vérifie la validité d'une réponse HTTP
-    private func httpResponseIsValid(_ response: HTTPURLResponse) -> Bool {
-        return (200...299).contains(response.statusCode)
+    
+    // MARK: - Password Management
+    
+    func changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String) -> AnyPublisher<PasswordChangeResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/user/change-password") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Request body
+        let body: [String: String] = [
+            "currentPassword": currentPassword,
+            "newPassword": newPassword,
+            "confirmPassword": confirmNewPassword
+        ]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: PasswordChangeResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
     }
 }
 
-// Réponse pour vérification du rôle
+// MARK: - Response Types
+
+struct LoginResponse: Decodable {
+    let success: Bool
+    let message: String?
+    let redirectUrl: String
+}
+
 struct RoleVerificationResponse: Decodable {
     let valid: Bool
+}
+
+struct PasswordChangeResponse: Decodable {
+    let success: Bool
+    let message: String
 }

@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 struct ChangePasswordView: View {
-    @StateObject private var viewModel = ChangePasswordViewModel()
+    @StateObject private var viewModel = ChangePasswordModel()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {

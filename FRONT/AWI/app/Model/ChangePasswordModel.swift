@@ -1,5 +1,6 @@
-import SwiftUI
+import Foundation
 import Combine
+import SwiftUI
 
 class ChangePasswordViewModel: ObservableObject {
     // Form fields
@@ -68,7 +69,7 @@ class ChangePasswordViewModel: ObservableObject {
         
         isLoading = true
         
-        authService.changePassword(currentPassword: currentPassword, newPassword: newPassword)
+        authService.changePassword(currentPassword: currentPassword, newPassword: newPassword, confirmNewPassword: confirmNewPassword)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
@@ -76,12 +77,13 @@ class ChangePasswordViewModel: ObservableObject {
                 if case .failure(let error) = completion {
                     self?.showError(message: "Erreur lors du changement de mot de passe: \(error.localizedDescription)")
                 }
-            } receiveValue: { [weak self] (response: ChangePasswordResponse) in
-                self?.isLoading = false
+            } receiveValue: { [weak self] response in
+                guard let self = self else { return }
+                
                 if response.success {
-                    self?.showSuccess(title: "Succès", message: "Mot de passe modifié avec succès")
+                    self.showSuccess(title: "Succès", message: "Votre mot de passe a été modifié avec succès.")
                 } else {
-                    self?.showError(message: response.message)
+                    self.showError(message: response.message)
                 }
             }
             .store(in: &cancellables)
