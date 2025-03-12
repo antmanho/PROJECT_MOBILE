@@ -1,115 +1,85 @@
-import SwiftUI
+import Foundation
 import Combine
 
-struct ForgotPasswordView: View {
-    @StateObject private var viewModel = ForgotPasswordViewModel()
-    @Environment(\.dismiss) private var dismiss
+class ForgotPasswordViewModel: ObservableObject {
+    // Form fields
+    @Published var email = ""
     
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Header
-                Text("RÉINITIALISER VOTRE MOT DE PASSE")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 30)
-                    .padding(.horizontal)
-                
-                // Description
-                Text("Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.")
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                // Form fields
-                VStack(alignment: .leading, spacing: 20) {
-                    // Email field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(.headline)
-                        
-                        TextField("Entrez votre adresse email", text: $viewModel.email)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(viewModel.emailError != nil ? Color.red : Color.clear, lineWidth: 1)
-                            )
-                        
-                        if let error = viewModel.emailError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                
-                // Error message
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                
-                // Submit button
-                Button(action: {
-                    viewModel.resetPassword()
-                }) {
-                    Text("Envoyer le lien de réinitialisation")
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .disabled(viewModel.isLoading)
-                .padding(.horizontal)
-                
-                // Back link
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("Retourner à la page de connexion")
-                        .foregroundColor(.blue)
-                }
-                .padding(.bottom, 30)
-                
-                // Loading indicator
-                if viewModel.isLoading {
-                    ProgressView("Envoi en cours...")
-                }
-                
-                Spacer()
-            }
-            .padding()
-        }
-        .navigationTitle("Mot de passe oublié")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert(isPresented: $viewModel.showAlert) {
-            Alert(
-                title: Text(viewModel.alertTitle),
-                message: Text(viewModel.alertMessage),
-                dismissButton: .default(Text("OK")) {
-                    if viewModel.isSuccess {
-                        dismiss()
-                    }
-                }
-            )
+    // Validation errors
+    @Published var emailError: String?
+    @Published var errorMessage: String?
+    
+    // UI state
+    @Published var isLoading = false
+    @Published var showAlert = false
+    @Published var alertTitle = ""
+    @Published var alertMessage = ""
+    @Published var isSuccess = false
+    
+    private var cancellables = Set<AnyCancellable>()
+    private let authService = AuthService()
+    
+    // Validate email
+    private func validateEmail() -> Bool {
+        if email.isEmpty {
+            emailError = "L'email est requis"
+            return false
+        } else if !isValidEmail(email) {
+            emailError = "Format d'email invalide"
+            return false
+        } else {
+            emailError = nil
+            return true
         }
     }
-}
-
-struct ForgotPasswordView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            ForgotPasswordView()
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    func requestPasswordReset() {
+        // Clear previous errors
+        errorMessage = nil
+        
+        // Validate email
+        guard validateEmail() else {
+            errorMessage = "Veuillez entrer une adresse email valide."
+            return
         }
+        
+        isLoading = true
+        
+        authService.requestPasswordReset(email: email)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isLoading = false
+                
+                if case .failure(let error) = completion {
+                    self?.showError(message: "Erreur lors de la demande de réinitialisation: \(error.localizedDescription)")
+                }
+            } receiveValue: { [weak self] response in
+                if response.success {
+                    self?.showSuccess(title: "Demande envoyée", message: response.message)
+                } else {
+                    self?.showError(message: response.message)
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func showError(message: String) {
+        alertTitle = "Erreur"
+        alertMessage = message
+        showAlert = true
+        isSuccess = false
+    }
+    
+    private func showSuccess(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
+        isSuccess = true
     }
 }

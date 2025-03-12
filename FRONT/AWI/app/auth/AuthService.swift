@@ -45,6 +45,36 @@ class AuthService: ObservableObject {
             .eraseToAnyPublisher()
     }
     
+    // MARK: - Registration Functionality
+    
+    func register(email: String, password: String, confirmPassword: String) -> AnyPublisher<RegisterResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/register") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: String] = [
+            "new_email": email,
+            "new_password": password,
+            "confirm_password": confirmPassword
+        ]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: RegisterResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+    
     // MARK: - Role Verification
     
     // Verify if user has Vendor role
@@ -110,6 +140,32 @@ class AuthService: ObservableObject {
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
+    
+    // MARK: - Password Reset
+    
+    func requestPasswordReset(email: String) -> AnyPublisher<PasswordResetResponse, Error> {
+        guard let url = URL(string: "\(baseURL)/request-password-reset") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: String] = ["email": email]
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        
+        return session.dataTaskPublisher(for: request)
+            .map(\.data)
+            .decode(type: PasswordResetResponse.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
 }
 
 // MARK: - Response Types
@@ -120,11 +176,21 @@ struct LoginResponse: Decodable {
     let redirectUrl: String
 }
 
+struct RegisterResponse: Decodable {
+    let success: Bool
+    let message: String
+}
+
 struct RoleVerificationResponse: Decodable {
     let valid: Bool
 }
 
 struct PasswordChangeResponse: Decodable {
+    let success: Bool
+    let message: String
+}
+
+struct PasswordResetResponse: Decodable {
     let success: Bool
     let message: String
 }

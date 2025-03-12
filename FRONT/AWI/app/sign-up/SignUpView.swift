@@ -1,166 +1,128 @@
-import SwiftUI
+import Foundation
 import Combine
 
-struct SignUpView: View {
-    @StateObject private var viewModel = SignUpViewModel()
-    @Environment(\.dismiss) private var dismiss
-    @State private var showingAlert = false
+class SignUpViewModel: ObservableObject {
+    // Form fields
+    @Published var email = ""
+    @Published var password = ""
+    @Published var confirmPassword = ""
     
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 25) {
-                // Header
-                Text("INSCRIPTION")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.top, 30)
+    // Validation errors
+    @Published var emailError: String?
+    @Published var passwordError: String?
+    @Published var confirmPasswordError: String?
+    @Published var errorMessage: String?
+    
+    // UI state
+    @Published var isLoading = false
+    @Published var showAlert = false
+    @Published var alertTitle = ""
+    @Published var alertMessage = ""
+    @Published var isSuccess = false
+    @Published var needsVerification = false
+    
+    // Navigation
+    @Published var navigationDestination: NavigationDestination?
+    
+    enum NavigationDestination {
+        case verification(email: String)
+    }
+    
+    private var cancellables = Set<AnyCancellable>()
+    private let authService = AuthService()
+    
+    // Validate form fields
+    private func validateForm() -> Bool {
+        var isValid = true
+        
+        // Email validation
+        if email.isEmpty {
+            emailError = "L'email est requis"
+            isValid = false
+        } else if !isValidEmail(email) {
+            emailError = "Format d'email invalide"
+            isValid = false
+        } else {
+            emailError = nil
+        }
+        
+        // Password validation
+        if password.isEmpty {
+            passwordError = "Le mot de passe est requis"
+            isValid = false
+        } else {
+            passwordError = nil
+        }
+        
+        // Confirm password validation
+        if confirmPassword.isEmpty {
+            confirmPasswordError = "La confirmation du mot de passe est requise"
+            isValid = false
+        } else if password != confirmPassword {
+            confirmPasswordError = "Les mots de passe ne correspondent pas"
+            isValid = false
+        } else {
+            confirmPasswordError = nil
+        }
+        
+        return isValid
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    func register() {
+        // Clear previous errors
+        errorMessage = nil
+        
+        guard validateForm() else {
+            errorMessage = "Veuillez remplir tous les champs correctement."
+            return
+        }
+        
+        isLoading = true
+        
+        authService.register(email: email, password: password, confirmPassword: confirmPassword)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isLoading = false
                 
-                // Form fields
-                VStack(alignment: .leading, spacing: 20) {
-                    // Email field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(.headline)
-                        
-                        TextField("Entrez votre adresse email", text: $viewModel.email)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(viewModel.emailError != nil ? Color.red : Color.clear, lineWidth: 1)
-                            )
-                        
-                        if let error = viewModel.emailError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-                    
-                    // Password field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Mot de passe")
-                            .font(.headline)
-                        
-                        SecureField("Entrez votre mot de passe", text: $viewModel.password)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(viewModel.passwordError != nil ? Color.red : Color.clear, lineWidth: 1)
-                            )
-                        
-                        if let error = viewModel.passwordError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-                    
-                    // Confirm password field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Confirmez le mot de passe")
-                            .font(.headline)
-                        
-                        SecureField("Confirmez votre mot de passe", text: $viewModel.confirmPassword)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(viewModel.confirmPasswordError != nil ? Color.red : Color.clear, lineWidth: 1)
-                            )
-                        
-                        if let error = viewModel.confirmPasswordError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
+                if case .failure(let error) = completion {
+                    self?.showError(message: "Erreur lors de l'inscription: \(error.localizedDescription)")
                 }
-                .padding(.horizontal)
+            } receiveValue: { [weak self] response in
+                guard let self = self else { return }
                 
-                // Error message
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                self.isSuccess = true
                 
-                // Submit button
-                Button(action: {
-                    viewModel.register()
-                }) {
-                    Text("S'inscrire")
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .disabled(viewModel.isLoading)
-                .padding(.horizontal)
-                
-                // Back to login link
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("Déjà inscrit ? Se connecter")
-                        .foregroundColor(.blue)
-                }
-                .padding(.bottom, 30)
-                
-                // Loading indicator
-                if viewModel.isLoading {
-                    ProgressView("Inscription en cours...")
+                if response.message.contains("code de verification") {
+                    self.needsVerification = true
+                    self.showSuccess(title: "Vérification requise", message: response.message)
+                } else {
+                    self.showSuccess(title: "Inscription réussie", message: "Vous pouvez maintenant vous connecter.")
                 }
             }
-            .padding()
-        }
-        .navigationTitle("Inscription")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert(isPresented: $viewModel.showAlert) {
-            Alert(
-                title: Text(viewModel.alertTitle),
-                message: Text(viewModel.alertMessage),
-                dismissButton: .default(Text("OK")) {
-                    if viewModel.isSuccess {
-                        // Navigate to verification screen or login screen
-                        if viewModel.needsVerification {
-                            viewModel.navigateToVerification()
-                        } else {
-                            dismiss()
-                        }
-                    }
-                }
-            )
-        }
-        .onChange(of: viewModel.navigationDestination) { destination in
-            if let destination = destination {
-                switch destination {
-                case .verification(let email):
-                    // Navigation would happen here using NavigationLink or other mechanism
-                    print("Navigate to verification with email: \(email)")
-                    // Reset the destination after navigation
-                    viewModel.navigationDestination = nil
-                }
-            }
-        }
+            .store(in: &cancellables)
+    }
+    
+    func navigateToVerification() {
+        navigationDestination = .verification(email: email)
+    }
+    
+    private func showError(message: String) {
+        alertTitle = "Erreur"
+        alertMessage = message
+        showAlert = true
+        isSuccess = false
+    }
+    
+    private func showSuccess(title: String, message: String) {
+        alertTitle = title
+        alertMessage = message
+        showAlert = true
+        isSuccess = true
     }
 }
-
-struct SignUpView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            SignUpView()
-        }
-    }
-}// à voir 
-// + à voir si on peut mettre un bouton pour retourner à la page de connexion
