@@ -1,24 +1,46 @@
-//
-//  ContentView.swift
-//  AWI
-//
-//  Created by BARBEDET on 11/03/2025.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    // Équivalent au component principal (AppComponent)
+    @EnvironmentObject var appState: AppState
+    @StateObject private var networkManager = NetworkManager()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationView {
+            VStack {
+                Text("Festival de Jeux")
+                    .font(.largeTitle)
+                    .padding()
+                
+                // Ici les vues principales de l'app
+                // Par exemple:
+                NavigationLink(destination: CatalogueView()) {
+                    Text("Accéder au Catalogue")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding()
+            }
+            .navigationBarTitle("Accueil", displayMode: .inline)
+            .overlay(
+                Group {
+                    if appState.isLoading {
+                        ProgressView("Chargement...")
+                            .background(Color.white.opacity(0.8))
+                    }
+                }
+            )
         }
-        .padding()
+        .environmentObject(networkManager)
     }
 }
 
-#Preview {
-    ContentView()
+// Vue d'aperçu pour le développement
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(AppState())
+    }
 }
