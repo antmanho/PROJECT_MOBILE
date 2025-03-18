@@ -1,4 +1,5 @@
 import SwiftUI
+import Game
 
 struct WithdrawalListView: View {
     @StateObject private var viewModel: WithdrawalListViewModel

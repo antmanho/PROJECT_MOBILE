@@ -1,4 +1,5 @@
 import SwiftUI
+import Game
 
 struct CatalogueView: View {
     @StateObject private var viewModel = CatalogueViewModel()

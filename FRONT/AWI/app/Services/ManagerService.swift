@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Game
 
 class ManagerService {
     private let baseURL = "http://localhost:3000"
@@ -100,22 +101,6 @@ class ManagerService {
 // Modèles de mise-en-vente
 struct CatalogueResponse: Decodable {
     let games: [Game]
-}
-
-struct Game: Codable, Identifiable {
-    let id: String
-    let nom: String
-    let type: String
-    let editeur: String
-    var enVente: Bool
-    let prix: Double
-    let vendeurId: String?
-    let vendeurNom: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id = "_id"
-        case nom, type, editeur, enVente, prix, vendeurId, vendeurNom
-    }
 }
 
 // Modèles de payer-vendeur

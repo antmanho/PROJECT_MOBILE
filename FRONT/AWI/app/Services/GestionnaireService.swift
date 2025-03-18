@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Game
 
 class GestionnaireService {
     private let baseURL = "http://localhost:3000"

@@ -2,6 +2,7 @@
 
 import Foundation
 import Combine
+import Game
 
 class WithdrawalListViewModel: ObservableObject {
     @Published var games: [Game] = []
