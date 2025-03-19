@@ -2,9 +2,8 @@ import SwiftUI
 
 struct Menu: View {
     @State private var selectedView: String = "Accueil"
-    @State private var X: String = "A"
-    @State private var activeTopButton: String? = nil
-    @State private var activeBottomButton: String? = nil
+    @State private var X: String = "0"
+    @State private var activeButton: String? = "Accueil" // Un seul état pour tous les boutons
 
     var body: some View {
         NavigationStack {
@@ -27,8 +26,8 @@ struct Menu: View {
                 if !getTopMenu().isEmpty {
                     HStack {
                         ForEach(getTopMenu(), id: \.self) { item in
-                            MenuButton(label: item, isActive: activeTopButton == item) {
-                                activeTopButton = item
+                            MenuButton(label: item, isActive: activeButton == item) {
+                                activeButton = item
                                 selectedView = item
                             }
                         }
@@ -67,18 +66,18 @@ struct Menu: View {
                     Color.blue.ignoresSafeArea(edges: .bottom)
 
                     HStack {
-                        MenuButtonLarge(label: "Accueil", isActive: activeBottomButton == "Accueil") {
-                            activeBottomButton = "Accueil"
+                        MenuButtonLarge(label: "Accueil", isActive: activeButton == "Accueil") {
+                            activeButton = "Accueil"
                             selectedView = "Accueil"
                         }
 
                         VStack {
                             if X == "0" {
-                                MenuButtonLarge(label: "Se connecter", isActive: activeBottomButton == "Se connecter") {
-                                    activeBottomButton = "Se connecter"
+                                MenuButtonLarge(label: "Se connecter", isActive: activeButton == "Se connecter", isSmall: true) {
+                                    activeButton = "Se connecter"
                                 }
-                                MenuButtonLarge(label: "S’inscrire", isActive: activeBottomButton == "S’inscrire") {
-                                    activeBottomButton = "S’inscrire"
+                                MenuButtonLarge(label: "S’inscrire", isActive: activeButton == "S’inscrire", isSmall: true) {
+                                    activeButton = "S’inscrire"
                                 }
                             } else {
                                 Text(getRoleText())
@@ -95,21 +94,23 @@ struct Menu: View {
                         .frame(maxWidth: .infinity)
 
                         if X == "A" || X == "G" {
-                            MenuButtonLarge(label: "Mise en Vente", isActive: activeBottomButton == "Mise en Vente") {
-                                activeBottomButton = "Mise en Vente"
+                            MenuButtonLarge(label: "Mise en Vente", isActive: activeButton == "Mise en Vente") {
+                                activeButton = "Mise en Vente"
                                 selectedView = "Mise en Vente"
                             }
                         } else {
-                            MenuButtonLarge(label: "Catalogue", isActive: activeBottomButton == "Catalogue") {
-                                activeBottomButton = "Catalogue"
+                            MenuButtonLarge(label: "Catalogue", isActive: activeButton == "Catalogue") {
+                                activeButton = "Catalogue"
                                 selectedView = "Catalogue"
                             }
                         }
                     }
-                    .padding(.bottom, 18)
+                    .padding(.bottom, 10)
+                    .padding(.top, 3)
                     .padding(2)
                 }
                 .frame(height: 60)
+    
             }
             .navigationBarBackButtonHidden(true)
         }
@@ -159,7 +160,7 @@ struct MenuButton: View {
                 .padding(.vertical, 10)
                 .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity)
-                .background(isActive ? Color(white: 0.9) : Color.black)
+                .background(isActive ? Color(white: 0.98) : Color.black)
                 .foregroundColor(isActive ? .black : .white)
                 .cornerRadius(10)
                 .scaleEffect(isActive ? 1.1 : 1.0)
@@ -171,6 +172,7 @@ struct MenuButton: View {
 struct MenuButtonLarge: View {
     let label: String
     let isActive: Bool
+    var isSmall: Bool = false // Ajout du paramètre pour modifier le padding
     let action: () -> Void
 
     var body: some View {
@@ -181,10 +183,10 @@ struct MenuButtonLarge: View {
         } label: {
             Text(label)
                 .font(.system(size: 17))
-                .padding(.vertical, 25)
+                .padding(.vertical, isSmall ? 5 : 25) // Changement dynamique du padding
                 .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity)
-                .background(isActive ? Color(white: 0.9) : Color.black)
+                .background(isActive ? Color(white: 0.98) : Color.black)
                 .foregroundColor(isActive ? .black : .white)
                 .cornerRadius(10)
                 .scaleEffect(isActive ? 1.05 : 1.0)
