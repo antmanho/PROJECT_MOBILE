@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct Menu: View {
-    @State private var selectedView: String = "Accueil"
-    @State private var X: String = "0"
-    @State private var activeButton: String? = "Accueil" // Un seul état pour tous les boutons
+    @State private var selectedView: String = "Retrait"
+    @State private var X: String = "G"
+    @State private var activeButton: String? = "Retrait"
+
+    // Ajout pour retenir l'email du particulier
+    @State private var retraitEmail: String = ""
 
     var body: some View {
         NavigationStack {
@@ -11,9 +14,7 @@ struct Menu: View {
                 
                 // 1) Menu du haut (fixe)
                 ZStack {
-                    Color.blue
-                        .ignoresSafeArea(edges: .top)
-
+                    Color.blue.ignoresSafeArea(edges: .top)
                     Text("Boardland")
                         .foregroundColor(.white)
                         .font(.largeTitle)
@@ -45,45 +46,58 @@ struct Menu: View {
                         case "Dépôt":
                             DepotView()
                         case "Retrait":
-                            Text("Retrait View")
+                            RetraitView(onAfficherListe: { email in
+                                self.retraitEmail = email
+                                self.selectedView = "RetraitListe"
+                            })
+                        case "RetraitListe":
+                            RetraitListeView(email: retraitEmail, onRetour: {
+                                self.selectedView = "Retrait"
+                            })
                         case "Payer":
                             Text("Payer View")
                         case "Achat":
                             Text("Achat View")
                         case "Bilan":
                             Text("Bilan View")
+                        case "ConnexionView":
+                            ConnexionView()
+                        case "InscriptionView":
+                            InscriptionView()
                         default:
                             Text("Sélectionnez une option")
                                 .font(.title)
                                 .foregroundColor(.black)
                         }
                     }
-                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
+
 
                 // 4) Menu du bas (fixe)
                 ZStack {
                     Color.blue.ignoresSafeArea(edges: .bottom)
-
                     HStack {
                         MenuButtonLarge(label: "Accueil", isActive: activeButton == "Accueil") {
                             activeButton = "Accueil"
                             selectedView = "Accueil"
                         }
-
+                        
                         VStack {
                             if X == "0" {
                                 MenuButtonLarge(label: "Se connecter", isActive: activeButton == "Se connecter", isSmall: true) {
                                     activeButton = "Se connecter"
+                                    selectedView = "ConnexionView"
                                 }
                                 MenuButtonLarge(label: "S’inscrire", isActive: activeButton == "S’inscrire", isSmall: true) {
                                     activeButton = "S’inscrire"
+                                    selectedView = "InscriptionView"
                                 }
                             } else {
                                 Text(getRoleText())
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                                     .padding(.top, 10)
+                                    .font(X == "G" ? .caption : .body)
 
                                 Button("Déconnexion") {
                                     print("Déconnexion")
@@ -222,13 +236,6 @@ struct AccueilView: View {
     }
 }
 
-struct DepotView: View {
-    var body: some View {
-        Text("Dépôt View")
-            .font(.largeTitle)
-            .foregroundColor(.green)
-    }
-}
 
 // MARK: - Preview
 #Preview {
