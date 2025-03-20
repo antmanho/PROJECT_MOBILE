@@ -1,10 +1,10 @@
 import SwiftUI
 
-struct RetraitListeView: View {
+struct PayerVendeurListeView: View {
     let email: String
     let onRetour: () -> Void
-    
-    @State private var jeux: [Jeu] = []
+
+    @State private var historiqueVentes: [Vente] = []
 
     var body: some View {
         GeometryReader { geometry in
@@ -12,7 +12,7 @@ struct RetraitListeView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         Spacer(minLength: 30)
-                        
+
                         // Bouton retour + Titre
                         HStack {
                             Button(action: onRetour) {
@@ -22,45 +22,34 @@ struct RetraitListeView: View {
                                     .frame(width: 30, height: 30)
                             }
                             .padding(.leading, 20)
-                            
+
                             Spacer()
-                            
-                            Text("Retirer jeu")
+
+                            Text("Historique des ventes")
                                 .font(.system(size: 22, weight: .bold))
                                 .padding(.trailing, 50)
-                            
+
                             Spacer()
                         }
                         .padding(.top, 10)
-                        
-                        // Tableau de jeux
+
+                        // Tableau de ventes
                         VStack(spacing: 0) {
-                            // Ligne d'entête
                             HStack(spacing: 0) {
-                                cellHeader("ID Stock", geometry: geometry)
                                 cellHeader("Nom du Jeu", geometry: geometry)
-                                cellHeader("Prix Demandé", geometry: geometry)
-                                cellHeader("Sélection", geometry: geometry)
+                                cellHeader("Qté vendue", geometry: geometry)
+                                cellHeader("Prix vendeur", geometry: geometry)
+                                cellHeader("Payé", geometry: geometry)
                             }
                             .frame(height: 40)
                             .background(Color.gray.opacity(0.2))
 
-                            // Lignes de jeux
-                            ForEach($jeux) { $jeu in
+                            ForEach(historiqueVentes) { vente in
                                 HStack(spacing: 0) {
-                                    cellBody("\(jeu.id_stock)", geometry: geometry)
-                                    cellBody(jeu.nom_jeu, geometry: geometry)
-                                    cellBody(String(format: "%.2f€", jeu.prix_unit), geometry: geometry)
-
-                                    // "Checkbox"
-                                    HStack {
-                                        Toggle("", isOn: $jeu.selectionne)
-                                            .labelsHidden()
-                                            .frame(width: 30, height: 30)
-                                            .tint(.blue)
-                                    }
-                                    .frame(width: largeurColonne(geometry), height: 40)
-                                    .border(Color.black)
+                                    cellBody(vente.nomJeu, geometry: geometry)
+                                    cellBody("\(vente.quantiteVendue)", geometry: geometry)
+                                    cellBody(String(format: "%.2f€", vente.prixUnit), geometry: geometry)
+                                    cellBody(vente.vendeurPaye ? "Oui" : "Non", geometry: geometry)
                                 }
                             }
                         }
@@ -68,9 +57,14 @@ struct RetraitListeView: View {
                         .frame(width: geometry.size.width * 0.9)
                         .padding(.horizontal, geometry.size.width * 0.05)
 
-                        // Bouton retirer
-                        Button(action: retirerJeux) {
-                            Text("Retirer les jeux sélectionnés")
+                        // Somme totale
+                        Text("Somme totale : \(historiqueVentes.first?.sommeTotaleDue ?? 0, specifier: "%.2f") €")
+                            .font(.system(size: 18, weight: .bold))
+                            .padding()
+
+                        // Bouton pour payer le vendeur
+                        Button(action: payerVendeur) {
+                            Text("Payer le vendeur")
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .font(.system(size: 17, weight: .bold))
@@ -79,33 +73,33 @@ struct RetraitListeView: View {
                                 .cornerRadius(10)
                         }
                         .padding(.horizontal, 20)
-                        
+
                         Spacer(minLength: 50)
                     }
                 }
             }
-            .onAppear(perform: fetchJeux)
+            .onAppear(perform: fetchHistorique)
         }
     }
 
-    private func fetchJeux() {
-        self.jeux = [
-            Jeu(id_stock: 101, nom_jeu: "Monopoly", prix_unit: 15.0, quantiteActuelle: 2),
-            Jeu(id_stock: 202, nom_jeu: "Catan", prix_unit: 20.0, quantiteActuelle: 1),
-            Jeu(id_stock: 303, nom_jeu: "7 Wonders", prix_unit: 25.0, quantiteActuelle: 3)
+    private func fetchHistorique() {
+        // Exemple factice : remplacer par l'appel HTTP réel
+        self.historiqueVentes = [
+            Vente(id: 1, nomJeu: "Monopoly", quantiteVendue: 3, prixUnit: 15.0, vendeurPaye: false, sommeTotaleDue: 45),
+            Vente(id: 2, nomJeu: "Catan", quantiteVendue: 2, prixUnit: 20.0, vendeurPaye: true, sommeTotaleDue: 40)
         ]
     }
 
-    private func retirerJeux() {
-        jeux.removeAll(where: \.selectionne) // suppression des jeux sélectionnés
-        scheduleNotification()               // appel de la notification
+    private func payerVendeur() {
+        print("Vendeur payé")              // logique existante (ex: appel HTTP réel)
+        scheduleNotification()             // appel de la notification
     }
 
     // Définition de la fonction juste en dessous :
     private func scheduleNotification() {
         let content = UNMutableNotificationContent()
-        content.title = "Retrait effectué"
-        content.body = "Les jeux sélectionnés ont été retirés avec succès."
+        content.title = "Paiement effectué"
+        content.body = "Le vendeur a été payé avec succès."
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
@@ -113,7 +107,6 @@ struct RetraitListeView: View {
 
         UNUserNotificationCenter.current().add(request)
     }
-
 
     private func largeurColonne(_ geometry: GeometryProxy) -> CGFloat {
         (geometry.size.width * 0.9) / 4
@@ -136,12 +129,11 @@ struct RetraitListeView: View {
     }
 }
 
-struct Jeu: Identifiable {
-    let id_stock: Int
-    let nom_jeu: String
-    let prix_unit: Double
-    var quantiteActuelle: Int
-    var selectionne: Bool = false
-
-    var id: Int { id_stock }
+struct Vente: Identifiable {
+    let id: Int
+    let nomJeu: String
+    let quantiteVendue: Int
+    let prixUnit: Double
+    let vendeurPaye: Bool
+    let sommeTotaleDue: Double
 }

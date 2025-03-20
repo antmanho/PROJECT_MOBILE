@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 import UserNotifications
 
 struct DepotView: View {
@@ -13,50 +14,43 @@ struct DepotView: View {
     @State private var selectedSession: Session? = nil
     @State private var showOptionalFields: Bool = false
 
+    @State private var selectedImage: UIImage? = nil
+    @State private var photosPickerItem: PhotosPickerItem?
+
     let sessions: [Session] = [
         Session(id: 1, nom: "Session 1", fraisDepotFixe: 5, fraisDepotPercent: 10),
         Session(id: 2, nom: "Session 2", fraisDepotFixe: 7, fraisDepotPercent: 12)
     ]
     
-    /// Binding pour sélectionner l’ID de la Session dans le Picker
     private var sessionPickerBinding: Binding<Int> {
         Binding<Int>(
-            get: {
-                selectedSession?.id ?? 0
-            },
-            set: { newValue in
-                selectedSession = sessions.first { $0.id == newValue }
-            }
+            get: { selectedSession?.id ?? 0 },
+            set: { newValue in selectedSession = sessions.first { $0.id == newValue } }
         )
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 1) Image de fond qui prend tout l'écran
                 Image("sport")
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
 
-                // 2) ScrollView pour tout le contenu
                 ScrollView {
                     VStack {
                         Spacer(minLength: 40)
 
-                        // ----------- FORMULAIRE -------------
                         VStack(spacing: 10) {
                             Text("DEPOT")
                                 .font(.system(size: 24, weight: .bold))
                                 .padding(.top, 10)
 
-                            // Toggle en BLEU
                             Toggle("Mise en vente immédiate", isOn: $estEnVente)
                                 .tint(.blue)
                                 .padding(.horizontal)
 
-                            // Picker : on utilise maintenant 'sessionPickerBinding'
                             Picker("Choisissez une session", selection: sessionPickerBinding) {
                                 Text("Sélectionnez une session").tag(0)
                                 ForEach(sessions, id: \.id) { session in
@@ -66,7 +60,6 @@ struct DepotView: View {
                             .pickerStyle(.menu)
                             .padding(.horizontal)
 
-                            // Infos session choisie
                             if let session = selectedSession {
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text("Frais dépôt fixe : \(session.fraisDepotFixe)€")
@@ -80,7 +73,6 @@ struct DepotView: View {
                                 .padding(.horizontal)
                             }
 
-                            // Champs de texte
                             TextField("Email du vendeur", text: $emailVendeur)
                                 .textFieldStyle(.roundedBorder)
                                 .padding(.horizontal)
@@ -99,7 +91,6 @@ struct DepotView: View {
                                 .padding(.horizontal)
                                 .keyboardType(.numberPad)
 
-                            // Champs optionnels
                             Button {
                                 showOptionalFields.toggle()
                             } label: {
@@ -119,9 +110,33 @@ struct DepotView: View {
                                     .frame(height: 100)
                                     .border(Color.gray, width: 1)
                                     .padding(.horizontal)
+                            
+
+                            // Sélection d'image
+                            PhotosPicker(selection: $photosPickerItem, matching: .images, photoLibrary: .shared()) {
+                                HStack {
+                                    Image(systemName: "photo.on.rectangle")
+                                        .font(.system(size: 20))
+                                    Text("Choisir une image")
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(10)
+                                .padding(.horizontal)
                             }
 
-                            // Bouton d'ajout
+                            // Afficher l'image choisie
+                            if let selectedImage {
+                                Image(uiImage: selectedImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: 250, maxHeight: 250)
+                                    .cornerRadius(10)
+                                    .padding(.horizontal)
+                            }
+                            }
                             Button("Ajouter") {
                                 scheduleLocalNotification()
                             }
@@ -144,11 +159,14 @@ struct DepotView: View {
 
                         Spacer(minLength: 60)
                     }
-                    // 3) Largeur fixe = écran, hauteur min = écran
-                    //    => le formulaire occupe l'écran si petit,
-                    //    mais peut s'allonger si le contenu grandit
-//                    .frame(width: geometry.size.width,
-//                           minHeight: geometry.size.height)
+                }
+            }
+        }
+        .onChange(of: photosPickerItem) { newItem in
+            Task {
+                if let loadedImageData = try? await newItem?.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: loadedImageData) {
+                    selectedImage = uiImage
                 }
             }
         }
@@ -161,18 +179,12 @@ struct DepotView: View {
         content.sound = UNNotificationSound.default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString,
-                                            content: content,
-                                            trigger: trigger)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Erreur notification: \(error.localizedDescription)")
-            }
-        }
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request)
     }
 }
 
-// MARK: - Session
 struct Session {
     var id: Int
     var nom: String

@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct Menu: View {
-    @State private var selectedView: String = "Retrait"
-    @State private var X: String = "G"
-    @State private var activeButton: String? = "Retrait"
+    @State private var selectedView: String = "Session"
+    @State private var X: String = "0"
+    @State private var activeButton: String? = "Session"
 
     // Ajout pour retenir l'email du particulier
     @State private var retraitEmail: String = ""
+
+    // Ajout pour retenir l'email du vendeur (paiement)
+    @State private var payerEmail: String = ""
+    @State private var bilanData: BilanData? = nil
 
     var body: some View {
         NavigationStack {
@@ -27,22 +31,30 @@ struct Menu: View {
                 if !getTopMenu().isEmpty {
                     HStack {
                         ForEach(getTopMenu(), id: \.self) { item in
-                            MenuButton(label: item, isActive: activeButton == item) {
+                            MenuButton(
+                                label: item,
+                                isActive: activeButton == item,
+                                isAdmin: X == "A" // Passe l'information Admin ici
+                            ) {
                                 activeButton = item
                                 selectedView = item
                             }
                         }
                     }
+
                     .padding(8)
                     .background(Color.blue)
                 }
                 
                 // 3) Contenu central (zone de rendu)
+                // À placer dans ton struct Menu
                 GeometryReader { geometry in
                     ZStack {
                         switch selectedView {
                         case "Accueil":
                             Accueil()
+                        case "Catalogue":
+                            CatalogueView()
                         case "Dépôt":
                             DepotView()
                         case "Retrait":
@@ -55,15 +67,46 @@ struct Menu: View {
                                 self.selectedView = "Retrait"
                             })
                         case "Payer":
-                            Text("Payer View")
+                            PayerVendeurView(onAfficherHistorique: { email in
+                                self.payerEmail = email
+                                self.selectedView = "HistoriqueAchats"
+                            })
+                        case "HistoriqueAchats":
+                            PayerVendeurListeView(email: payerEmail, onRetour: {
+                                self.selectedView = "Payer"
+                            })
                         case "Achat":
-                            Text("Achat View")
+                            EnregistrerAchatView(onConfirmerAchat: {_,_ in 
+                                                        // Action à effectuer après confirmation d'achat
+                                                    })
+                            // dans ton switch :
                         case "Bilan":
-                            Text("Bilan View")
+                            BilanView(onAfficherBilanGraphe: { data in
+                                bilanData = data
+                                selectedView = "BilanGraphe"
+                            })
+                        case "BilanGraphe":
+                            if let data = bilanData {
+                                BilanGrapheView(data: data, onRetour: {
+                                    selectedView = "Bilan"
+                                })
+                            } else {
+                                Text("Aucune donnée à afficher")
+                            }
+
                         case "ConnexionView":
                             ConnexionView()
+                        case "Session":
+                            SessionView()
+                        case "Utilisateurs":
+                            GestionUtilisateurView()
                         case "InscriptionView":
                             InscriptionView()
+                        case "Gestionnaire":
+                            GestionnaireView(selectedView: $selectedView)
+                        case "Pré-Inscription":
+                            PreinscriptionView(selectedView: $selectedView)
+
                         default:
                             Text("Sélectionnez une option")
                                 .font(.title)
@@ -108,7 +151,7 @@ struct Menu: View {
                         .frame(maxWidth: .infinity)
 
                         if X == "A" || X == "G" {
-                            MenuButtonLarge(label: "Mise en Vente", isActive: activeButton == "Mise en Vente") {
+                            MenuButtonLarge(label: "Catalogue", isActive: activeButton == "Mise en Vente") {
                                 activeButton = "Mise en Vente"
                                 selectedView = "Mise en Vente"
                             }
@@ -135,7 +178,7 @@ struct Menu: View {
         case "G":
             return ["Dépôt", "Retrait", "Payer", "Achat", "Bilan"]
         case "A":
-            return ["Créer Session", "Modifier Session", "Gestion Utilisateur"]
+            return ["Session", "Utilisateurs", "Pré-Inscription", "Gestionnaire"]
         case "V":
             return ["Tableau de Bord"]
         case "0":
@@ -160,7 +203,12 @@ struct Menu: View {
 struct MenuButton: View {
     let label: String
     let isActive: Bool
+    let isAdmin: Bool
     let action: () -> Void
+
+    private var isSmallButton: Bool {
+        label == "Pré-Inscription" || label == "Gestionnaire"
+    }
 
     var body: some View {
         Button {
@@ -169,15 +217,16 @@ struct MenuButton: View {
             }
         } label: {
             Text(label)
-                .font(.system(size: 17))
+                .font(.system(size: isSmallButton ? 11 : (isAdmin ? 13.5 : 17)))
                 .multilineTextAlignment(.center)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 8)
-                .frame(maxWidth: .infinity)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, isSmallButton ? 5 : 8)
+                .padding(.horizontal, 6)
+                .frame(maxWidth: .infinity, minHeight: isAdmin ? 50 : 40)
                 .background(isActive ? Color(white: 0.98) : Color.black)
                 .foregroundColor(isActive ? .black : .white)
                 .cornerRadius(10)
-                .scaleEffect(isActive ? 1.1 : 1.0)
+                .scaleEffect(isActive ? 1.05 : 1.0)
                 .animation(.spring(), value: isActive)
         }
     }
