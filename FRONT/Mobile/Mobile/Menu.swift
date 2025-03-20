@@ -2,7 +2,7 @@ import SwiftUI
 
 struct Menu: View {
     @State private var selectedView: String = "Session"
-    @State private var X: String = "0"
+    @State private var X: String = "V"
     @State private var activeButton: String? = "Session"
 
     // Ajout pour retenir l'email du particulier
@@ -12,6 +12,12 @@ struct Menu: View {
     @State private var payerEmail: String = ""
     @State private var bilanData: BilanData? = nil
 
+    // États pour la navigation interne
+    // États pour la navigation interne
+    // Nouveau state pour retenir le jeu sélectionné
+       @State private var selectedGame: Int? = nil
+        @State private var catalogueGames: [Game] = []  // Chargez ces jeux depuis votre back
+       
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -54,7 +60,19 @@ struct Menu: View {
                         case "Accueil":
                             Accueil()
                         case "Catalogue":
-                            CatalogueView()
+                            CatalogueView(games: catalogueGames, onGameSelected: { game in
+                                // Stocker l'identifiant du jeu sélectionné dans selectedGame
+                                selectedGame = game.id
+                                selectedView = "DetailArticle"
+                            })
+                        case "DetailArticle":
+                            if let id = selectedGame {
+                                DetailArticleView(gameId: id, onBack: {
+                                    selectedView = "Catalogue"
+                                })
+                            } else {
+                                Text("Aucun produit sélectionné")
+                            }
                         case "Dépôt":
                             DepotView()
                         case "Retrait":
