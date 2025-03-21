@@ -95,8 +95,25 @@ struct Menu: View {
                                 onInscription: {
                                     selectedView = "InscriptionView"
                                     activeButton = "S’inscrire"
+                                },
+                                onLoginSuccess: { role in
+                                    // Mise à jour de X en fonction du rôle récupéré
+                                    switch role.lowercased() {
+                                    case "vendeur":
+                                        X = "V"
+                                    case "admin":
+                                        X = "A"
+                                    case "gestionnaire":
+                                        X = "G"
+                                    default:
+                                        X = "0"
+                                    }
+                                    // Vous pouvez aussi définir la vue à afficher après connexion réussie
+                                    activeButton = "Accueil"
+                                    selectedView = "Accueil"
                                 }
                             )
+
 
                         case "InscriptionView":
                             InscriptionView(
@@ -233,9 +250,36 @@ struct Menu: View {
                                     .font(X == "G" ? .caption : .body)
 
                                 Button("Déconnexion") {
-                                    print("Déconnexion")
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        // Réinitialisation de l'état
+                                        X = "0"
+                                        activeButton = "Se connecter"
+                                        selectedView = "ConnexionView"
+                                        
+                                        // Préparer et envoyer la requête POST pour la déconnexion
+                                        guard let url = URL(string: "http://localhost:3000/deconnexion") else {
+                                            print("URL invalide")
+                                            return
+                                        }
+                                        
+                                        var request = URLRequest(url: url)
+                                        request.httpMethod = "POST"
+                                        
+                                        URLSession.shared.dataTask(with: request) { data, response, error in
+                                            if let error = error {
+                                                print("Erreur lors de la déconnexion : \(error)")
+                                                return
+                                            }
+                                            if let data = data,
+                                               let responseString = String(data: data, encoding: .utf8) {
+                                                print("Réponse backend : \(responseString)")
+                                            }
+                                        }.resume()
+                                    }
                                 }
-                                .buttonStyle(MenuButtonStyle())
+                                .buttonStyle(DeconnexionButtonStyle())
+
+
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -357,19 +401,20 @@ struct MenuButtonLarge: View {
     }
 }
 
-struct MenuButtonStyle: ButtonStyle {
+struct DeconnexionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.vertical, 10)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
-            .background(Color.black)
-            .foregroundColor(.white)
+            .background(configuration.isPressed ? Color(white: 0.98) : Color.black)
+            .foregroundColor(configuration.isPressed ? .black : .white)
             .cornerRadius(10)
-            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 1.05 : 1.0)
+            .animation(.spring(), value: configuration.isPressed)
     }
 }
+
 
 // MARK: - Vues Exemple
 struct AccueilView: View {
