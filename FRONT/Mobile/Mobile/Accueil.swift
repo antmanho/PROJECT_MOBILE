@@ -13,28 +13,30 @@ struct Accueil: View {
                         .fontWeight(.bold) // Le texte est en gras
                         .multilineTextAlignment(.center)
                         .padding()
-                        .padding(.top, 4)
+                        .padding(.top, 2)
 
                     
                     // Image et description
-                    HStack {
+                    VStack {
+                        Text("Cette application permet de gérer des festivals de jeux de société : achat, vente, et bien plus !")
+                            .font(.system(size: 12))
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        
                         Image("mon-image")
                             .resizable()
                             .scaledToFit() // Conserve les proportions
-                            .frame(width: UIScreen.main.bounds.width / 2)
+                            .frame(width: UIScreen.main.bounds.width / 1.65)
                         
-                        Text("Cette application permet de gérer des festivals de jeux de société : achat, vente, et bien plus !")
-                            .font(.body)
-                            .foregroundColor(.black)
-                            .multilineTextAlignment(.leading)
-                            .padding()
+                        
                     }
                     
                     // Information Bubbles
                     VStack(alignment: .leading, spacing: 10) {
                         InfoBubble(text: "🎲 Découvrez un large catalogue de jeux de société disponibles lors des festivals !")
                         InfoBubble(text: "📦 Enregistrez et suivez les jeux déposés facilement avec des étiquettes uniques.")
-                        InfoBubble(text: "🔐 Profitez d'une plateforme sécurisée pour toutes vos gestions de jeux.")
+
                     }
                     .padding()
                 }

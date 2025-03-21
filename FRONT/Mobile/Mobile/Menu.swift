@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct Menu: View {
-    @State private var selectedView: String = "Session"
-    @State private var X: String = "V"
-    @State private var activeButton: String? = "Session"
+    @State private var selectedView: String = "ConnexionView"
+    @State private var X: String = "A" // Simule le rôle Admin
+    @State private var activeButton: String? = "Se connecter"
 
     // Ajout pour retenir l'email du particulier
     @State private var retraitEmail: String = ""
@@ -13,16 +13,17 @@ struct Menu: View {
     @State private var bilanData: BilanData? = nil
 
     // États pour la navigation interne
-    // États pour la navigation interne
-    // Nouveau state pour retenir le jeu sélectionné
-       @State private var selectedGame: Int? = nil
-        @State private var catalogueGames: [Game] = []  // Chargez ces jeux depuis votre back
-       
+    @State private var selectedGame: Int? = nil
+    @State private var catalogueGames: [Game] = []  // Chargez ces jeux depuis votre back
+
+    @State private var lastViewBeforeMotPasseOublie: String = "ConnexionView"
+    @State private var lastViewBeforeDetailArticle: String = "CatalogueView"
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 
-                // 1) Menu du haut (fixe)
+                // 🔹 Menu du haut (fixe)
                 ZStack {
                     Color.blue.ignoresSafeArea(edges: .top)
                     Text("Boardland")
@@ -33,76 +34,161 @@ struct Menu: View {
                 }
                 .frame(height: 50)
 
-                // 2) Top Menu (si applicable)
+                // 🔹 **Top Menu (ajout des nouvelles cases)**
                 if !getTopMenu().isEmpty {
                     HStack {
                         ForEach(getTopMenu(), id: \.self) { item in
                             MenuButton(
                                 label: item,
                                 isActive: activeButton == item,
-                                isAdmin: X == "A" // Passe l'information Admin ici
+                                isAdmin: X == "A"
                             ) {
                                 activeButton = item
                                 selectedView = item
                             }
                         }
                     }
-
                     .padding(8)
                     .background(Color.blue)
                 }
                 
-                // 3) Contenu central (zone de rendu)
-                // À placer dans ton struct Menu
+                // 🔹 **Contenu central (zone de rendu)**
                 GeometryReader { geometry in
                     ZStack {
                         switch selectedView {
+                        case "ModificationSessionView":
+                            ModificationSessionView(selectedView: $selectedView)
+
                         case "Accueil":
                             Accueil()
                         case "Catalogue":
                             CatalogueView(games: catalogueGames, onGameSelected: { game in
-                                // Stocker l'identifiant du jeu sélectionné dans selectedGame
                                 selectedGame = game.id
+                                lastViewBeforeDetailArticle = "Catalogue"
                                 selectedView = "DetailArticle"
                             })
+
+                        case "Mise en Vente":
+                            MiseEnVenteView(onGameSelected: { game in
+                                selectedGame = game.id
+                                lastViewBeforeDetailArticle = "Mise en Vente"
+                                selectedView = "DetailArticle"
+                            })
+
+
+
                         case "DetailArticle":
                             if let id = selectedGame {
                                 DetailArticleView(gameId: id, onBack: {
-                                    selectedView = "Catalogue"
+                                    selectedView = lastViewBeforeDetailArticle
                                 })
                             } else {
                                 Text("Aucun produit sélectionné")
                             }
+                        
+                        case "ConnexionView":
+                            ConnexionView(
+                                onMotDePasseOublie: {
+                                    lastViewBeforeMotPasseOublie = "ConnexionView"
+                                    selectedView = "MotPasseOublieView"
+                                },
+                                onInscription: {
+                                    selectedView = "InscriptionView"
+                                    activeButton = "S’inscrire"
+                                }
+                            )
+
+                        case "InscriptionView":
+                            InscriptionView(
+                                onMotDePasseOublie: {
+                                    lastViewBeforeMotPasseOublie = "InscriptionView"
+                                    selectedView = "MotPasseOublieView"
+                                },
+                                onConnexion: {
+                                    selectedView = "ConnexionView"
+                                    activeButton = "Se connecter"
+                                },
+                                onCheckEmail: {
+                                    selectedView = "CheckEmailView"
+                                    activeButton = "S’inscrire"
+                                }
+                            )
+
+                        case "CheckEmailView":
+                            CheckEmailView(
+                                email: "exemple@mail.com",
+                                onRetour: {
+                                    selectedView = "InscriptionView"
+                                },
+                                onInvité: {
+                                    selectedView = "Menu"
+                                }
+                            )
+
+                        case "MotPasseOublieView":
+                            MotPasseOublieView(
+                                onRetourDynamic: {
+                                    selectedView = lastViewBeforeMotPasseOublie
+                                },
+                                onInscription: {
+                                    selectedView = "InscriptionView"
+                                    activeButton = "S’inscrire"
+                                }
+                            )
+
                         case "Dépôt":
                             DepotView()
+
+                        case "Pré-Inscription":
+                            PreinscriptionView(selectedView: $selectedView)
+
+                        case "Session":
+                            SessionView(selectedView: $selectedView)
+
+                        case "CreerSessionView":
+                            CreerSessionView(onRetour: {
+                                selectedView = "Session"
+                            })
+
+                        case "Utilisateurs":
+                            GestionUtilisateurView()
+                        case "Achat":
+                            EnregistrerAchatView { idStock, quantite in
+                                print("Achat confirmé : ID Stock \(idStock), Quantité \(quantite)")
+                                // Tu peux aussi mettre ici une logique pour enregistrer dans la base ou autre
+                            }
+
+                        case "Gestionnaire":
+                            GestionnaireView(selectedView: $selectedView)
+
                         case "Retrait":
                             RetraitView(onAfficherListe: { email in
                                 self.retraitEmail = email
                                 self.selectedView = "RetraitListe"
                             })
+
                         case "RetraitListe":
                             RetraitListeView(email: retraitEmail, onRetour: {
                                 self.selectedView = "Retrait"
                             })
+
                         case "Payer":
                             PayerVendeurView(onAfficherHistorique: { email in
                                 self.payerEmail = email
                                 self.selectedView = "HistoriqueAchats"
                             })
+
                         case "HistoriqueAchats":
                             PayerVendeurListeView(email: payerEmail, onRetour: {
                                 self.selectedView = "Payer"
                             })
-                        case "Achat":
-                            EnregistrerAchatView(onConfirmerAchat: {_,_ in 
-                                                        // Action à effectuer après confirmation d'achat
-                                                    })
-                            // dans ton switch :
+
                         case "Bilan":
                             BilanView(onAfficherBilanGraphe: { data in
                                 bilanData = data
                                 selectedView = "BilanGraphe"
                             })
+                    
                         case "BilanGraphe":
                             if let data = bilanData {
                                 BilanGrapheView(data: data, onRetour: {
@@ -112,19 +198,6 @@ struct Menu: View {
                                 Text("Aucune donnée à afficher")
                             }
 
-                        case "ConnexionView":
-                            ConnexionView()
-                        case "Session":
-                            SessionView()
-                        case "Utilisateurs":
-                            GestionUtilisateurView()
-                        case "InscriptionView":
-                            InscriptionView()
-                        case "Gestionnaire":
-                            GestionnaireView(selectedView: $selectedView)
-                        case "Pré-Inscription":
-                            PreinscriptionView(selectedView: $selectedView)
-
                         default:
                             Text("Sélectionnez une option")
                                 .font(.title)
@@ -133,8 +206,7 @@ struct Menu: View {
                     }
                 }
 
-
-                // 4) Menu du bas (fixe)
+                // 🔹 **Menu du bas (fixe)**
                 ZStack {
                     Color.blue.ignoresSafeArea(edges: .bottom)
                     HStack {
@@ -190,7 +262,7 @@ struct Menu: View {
             .navigationBarBackButtonHidden(true)
         }
     }
-    
+
     private func getTopMenu() -> [String] {
         switch X {
         case "G":
@@ -216,6 +288,15 @@ struct Menu: View {
         }
     }
 }
+
+// 🔹 **Prévisualisation**
+struct Menu_Previews: PreviewProvider {
+    static var previews: some View {
+        Menu()
+    }
+}
+
+
 
 // MARK: - Boutons de menu
 struct MenuButton: View {

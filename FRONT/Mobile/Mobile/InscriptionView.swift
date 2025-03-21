@@ -6,14 +6,18 @@ struct InscriptionView: View {
     @State private var confirmPassword: String = ""
     @State private var errorMessage: String? = nil
 
+    let onMotDePasseOublie: () -> Void // 👈 Callback vers `MotPasseOublieView`
+    let onConnexion: () -> Void // 👈 Callback vers `ConnexionView`
+    let onCheckEmail: () -> Void // 👈 Callback pour `CheckEmailView`
+
     var body: some View {
         VStack {
             Spacer()
 
-            // Container principal
+            // 🧩 Zone principale centrée
             VStack(spacing: 20) {
 
-                // Premier cadre (Inscription)
+                // 🔵 Premier cadre (Inscription)
                 VStack {
                     Text("INSCRIPTION")
                         .font(.custom("Bangers", size: 30))
@@ -37,7 +41,6 @@ struct InscriptionView: View {
                             .cornerRadius(5)
 
                         Button(action: {
-                            // Vérification des champs
                             if email.isEmpty || password.isEmpty || confirmPassword.isEmpty {
                                 errorMessage = "Veuillez remplir tous les champs"
                             } else if password != confirmPassword {
@@ -45,6 +48,7 @@ struct InscriptionView: View {
                             } else {
                                 errorMessage = nil
                                 print("Inscription réussie avec : \(email)")
+                                onCheckEmail() // 🔥 Redirection vers `CheckEmailView`
                             }
                         }) {
                             Text("S'inscrire")
@@ -56,6 +60,7 @@ struct InscriptionView: View {
                         }
                         .padding(.top, 10)
 
+
                         if let errorMessage = errorMessage {
                             Text(errorMessage)
                                 .foregroundColor(.red)
@@ -66,8 +71,9 @@ struct InscriptionView: View {
 
                     DividerView2()
 
+                    // 🔥 Bouton qui ouvre `MotPasseOublieView`
                     Button(action: {
-                        // Action mot de passe oublié (si nécessaire)
+                        onMotDePasseOublie() // 🔥 Callback activé
                     }) {
                         Text("Mot de passe oublié ?")
                             .foregroundColor(Color.blue)
@@ -78,15 +84,16 @@ struct InscriptionView: View {
                 .frame(maxWidth: .infinity)
                 .border(Color.black, width: 2)
 
-                // Deuxième cadre (Lien vers Connexion)
+                // 🔵 Deuxième cadre (Lien vers Connexion)
                 VStack {
                     HStack {
                         Text("Vous avez déjà un compte ?")
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
+                        // 🔥 Bouton qui ouvre `ConnexionView`
                         Button(action: {
-                            // Action pour naviguer vers la connexion
+                            onConnexion() // 🔥 Callback activé
                         }) {
                             Text("Connectez-vous")
                                 .foregroundColor(.blue)
@@ -114,13 +121,7 @@ struct InscriptionView: View {
     }
 }
 
-struct InscriptionView_Previews: PreviewProvider {
-    static var previews: some View {
-        InscriptionView()
-    }
-}
-
-// DividerView identique à ConnexionView
+// 🟠 **DividerView identique à ConnexionView**
 struct DividerView2: View {
     var body: some View {
         HStack {

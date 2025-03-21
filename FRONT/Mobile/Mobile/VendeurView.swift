@@ -91,31 +91,23 @@ class VendeurViewModel: ObservableObject {
 
 struct VendeurView: View {
     @StateObject private var viewModel = VendeurViewModel()
+    
     // États pour le formulaire du bilan
     @State private var sessionParticuliere: Bool = false
     @State private var numeroSession: String = ""
     @State private var chargesFixes: String = ""
     
-    private func viewBilan() {
-        // Vous pouvez utiliser viewModel.emailConnecte pour construire l'URL
-        let bilanParticulier = (numeroSession != "" ? "true" : "false")
-        let emailParticulier = viewModel.emailConnecte ?? ""
-        // Exemple d'URL, à adapter
-        let bilanUrl = "http://localhost:4200/vendeur-bilan?bilanParticulier=\(bilanParticulier)&sessionParticuliere=\(sessionParticuliere)&emailParticulier=\(emailParticulier)&numeroSession=\(numeroSession)&chargesFixes=\(chargesFixes)"
-        print("Redirection vers le bilan: \(bilanUrl)")
-        // Par exemple, vous pourriez utiliser SafariView pour afficher l'URL
-    }
+    // Callback pour afficher le graphe vendeur
+    let onAfficherGraphe: (BilanData) -> Void
     
     var body: some View {
         ScrollView {
             VStack(spacing: 30) {
-                // Titre du tableau de bord
-                Text("MON TABLEAU DE BORD")
+                Text("TABLEAU DE BORD")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
                 
-                // Affichage d'une erreur le cas échéant
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .foregroundColor(.red)
@@ -125,12 +117,7 @@ struct VendeurView: View {
                 
                 // Section Voir bilan personnel
                 VStack(spacing: 20) {
-                    Text("VOIR BILAN PERSONNEL")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
                     VStack(spacing: 15) {
-                        // Toggle pour choisir entre "Toutes les sessions" et "Session particulière"
                         HStack {
                             Text("Toutes les sessions")
                             Toggle("", isOn: $sessionParticuliere)
@@ -138,20 +125,26 @@ struct VendeurView: View {
                             Text("Session particulière")
                         }
                         
-                        // Champ pour le numéro de session si sélectionné
                         if sessionParticuliere {
                             TextField("Entrez le numéro de session", text: $numeroSession)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .keyboardType(.numberPad)
                         }
                         
-                        // Champ pour les charges fixes
                         TextField("Entrez les charges fixes", text: $chargesFixes)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .keyboardType(.decimalPad)
                         
-                        // Bouton pour afficher le bilan
-                        Button(action: viewBilan) {
+                        Button(action: {
+                            let data = BilanData(
+                                bilanParticulier: false,
+                                sessionParticuliere: sessionParticuliere,
+                                emailParticulier: viewModel.emailConnecte ?? "",
+                                numeroSession: numeroSession,
+                                chargesFixes: Double(chargesFixes) ?? 0
+                            )
+                            onAfficherGraphe(data)
+                        }) {
                             Text("Voir le Bilan")
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -178,86 +171,90 @@ struct VendeurView: View {
                         Text("Vous n'avez pas encore vendu de jeux.")
                             .foregroundColor(.gray)
                             .font(.title3)
-                    } else {
+                    }else {
                         ForEach(viewModel.soldGames) { soldGame in
-                            CardView(title: soldGame.nomJeu,
-                                     imageUrl: "http://localhost:3000" + soldGame.photoPath,
-                                     details: "Prix : \(soldGame.prixUnit, specifier: "%.2f") €\nQuantité vendue : \(soldGame.quantiteVendue)")
+                            CardView(
+                                title: soldGame.nomJeu,
+                                imageUrl: "http://localhost:3000" + soldGame.photoPath,
+                                details: """
+                                Prix : \(String(format: "%.2f", soldGame.prixUnit)) €
+                                Quantité vendue : \(soldGame.quantiteVendue)
+                                """
+                            )
                         }
                     }
-                }
-                .padding(.horizontal)
-                
-                // Section Mes jeux déposés
-                VStack(spacing: 20) {
-                    Text("MES JEUX DEPOSES")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+
                     
-                    if viewModel.games.isEmpty {
-                        Text("Vous n'avez pas encore déposé de jeux en vente.")
-                            .foregroundColor(.gray)
-                            .font(.title3)
-                    } else {
-                        ForEach(viewModel.games) { game in
-                            NavigationLink(destination: DetailArticleView(gameId: game.id)) {
-                                CardView(title: game.nomJeu,
-                                         imageUrl: "http://localhost:3000" + game.photoPath,
-                                         details: "N°article : \(game.id)\n\(game.prixFinal, specifier: "%.2f") €\nEst en vente : \(game.estEnVente ? "OUI" : "NON")")
+                    // Section Mes jeux déposés
+                    VStack(spacing: 20) {
+                        Text("MES JEUX DEPOSES")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        
+                        if viewModel.games.isEmpty {
+                            Text("Vous n'avez pas encore déposé de jeux en vente.")
+                                .foregroundColor(.gray)
+                                .font(.title3)
+                        } else {
+                            ForEach(viewModel.games) { game in
+                                NavigationLink(destination: DetailArticleView(gameId: game.id)) {
+                                    CardView(
+                                        title: game.nomJeu,
+                                        imageUrl: "http://localhost:3000" + game.photoPath,
+                                        details: """
+                                  N°article : \(game.id)
+                                  \(String(format: "%.2f", game.prixFinal)) €
+                                  Est en vente : \(game.estEnVente ? "OUI" : "NON")
+                                  """
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            
                         }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                .padding(.vertical)
             }
-            .padding(.vertical)
         }
-        .navigationTitle("Tableau de Bord")
     }
-}
-
-// Vue réutilisable pour afficher une carte de jeu
-struct CardView: View {
-    let title: String
-    let imageUrl: String
-    let details: String
     
-    var body: some View {
-        VStack(alignment: .center, spacing: 10) {
-            Text(title)
-                .font(.headline)
-            
-            AsyncImage(url: URL(string: imageUrl)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 200, height: 150)
-                    .clipped()
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 200, height: 150)
+    
+    // Vue réutilisable pour afficher une carte de jeu
+    struct CardView: View {
+        let title: String
+        let imageUrl: String
+        let details: String
+        
+        var body: some View {
+            VStack(alignment: .center, spacing: 10) {
+                Text(title)
+                    .font(.headline)
+                
+                AsyncImage(url: URL(string: imageUrl)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 200, height: 150)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 200, height: 150)
+                }
+                
+                Text(details)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
             }
-            
-            Text(details)
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(radius: 4)
-        .padding(5)
-    }
-}
-
-
-
-struct VendeurView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            VendeurView()
+            .padding()
+            .background(Color.white)
+            .cornerRadius(10)
+            .shadow(radius: 4)
+            .padding(5)
         }
     }
+    
+    
 }

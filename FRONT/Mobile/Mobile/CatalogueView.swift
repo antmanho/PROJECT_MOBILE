@@ -8,7 +8,7 @@ struct Game: Identifiable, Decodable {
     let fraisDepotFixe: Int   // Correspond à Frais_depot_fixe
     let fraisDepotPercent: Int// Correspond à Frais_depot_percent
     let prixFinal: Double     // Correspond à prix_final
-    let estEnVente: Bool      // Converti depuis un entier (1 ou 0)
+    var estEnVente: Bool      // Converti depuis un entier (1 ou 0)
 
     private enum CodingKeys: String, CodingKey {
         case id = "id_stock"

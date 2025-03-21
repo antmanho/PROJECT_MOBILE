@@ -1,18 +1,21 @@
 import SwiftUI
 
+
+
 struct ConnexionView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String? = nil
 
+    // 🔁 Callbacks pour navigation
+    let onMotDePasseOublie: () -> Void
+    let onInscription: () -> Void // 👈 Ajout du callback pour aller vers InscriptionView
+
     var body: some View {
         VStack {
             Spacer()
 
-            // Container parent qui fixe la largeur globale
             VStack(spacing: 20) {
-
-                // Premier cadre
                 VStack {
                     Text("CONNEXION")
                         .font(.custom("Bangers", size: 30))
@@ -31,11 +34,11 @@ struct ConnexionView: View {
                             .cornerRadius(5)
 
                         Button(action: {
-                            // Action de connexion
                             if email.isEmpty || password.isEmpty {
                                 errorMessage = "Veuillez remplir tous les champs"
                             } else {
                                 errorMessage = nil
+                                // Logique de connexion
                             }
                         }) {
                             Text("Se connecter")
@@ -57,8 +60,9 @@ struct ConnexionView: View {
 
                     DividerView()
 
+                    // 🔗 Lien "Mot de passe oublié"
                     Button(action: {
-                        // Action mot de passe oublié
+                        onMotDePasseOublie()
                     }) {
                         Text("Mot de passe oublié ?")
                             .foregroundColor(Color.blue)
@@ -66,17 +70,17 @@ struct ConnexionView: View {
                     .padding(.top, 10)
                 }
                 .padding()
-                .frame(maxWidth: .infinity) // Force le cadre à prendre toute la largeur du parent
+                .frame(maxWidth: .infinity)
                 .border(Color.black, width: 2)
 
-                // Deuxième cadre
+                // 🔗 Lien vers InscriptionView
                 VStack {
                     HStack {
-                        Text("Vous n'avez pas \n de compte ?")
+                        Text("Vous n'avez pas de compte ?")
                             .minimumScaleFactor(0.9)
 
                         Button(action: {
-                            // Action inscription
+                            onInscription() // 🔥 Redirection vers InscriptionView
                         }) {
                             Text("Inscrivez-vous")
                                 .foregroundColor(.blue)
@@ -87,12 +91,11 @@ struct ConnexionView: View {
                     .padding(.vertical, 10)
                 }
                 .padding()
-                .frame(maxWidth: .infinity) // Force la même largeur que le premier cadre
+                .frame(maxWidth: .infinity)
                 .border(Color.black, width: 2)
-
             }
-            .frame(width: UIScreen.main.bounds.width * 0.9 ) // Largeur globale imposée
-            .fixedSize(horizontal: false, vertical: true) // Évite les redimensionnements imprévus
+            .frame(width: UIScreen.main.bounds.width * 0.9)
+            .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
 
@@ -105,6 +108,7 @@ struct ConnexionView: View {
         }
     }
 }
+
 
 struct DividerView: View {
     var body: some View {
@@ -120,11 +124,5 @@ struct DividerView: View {
                 .foregroundColor(.black)
         }
         .padding(.vertical, 10)
-    }
-}
-
-struct ConnexionView_Previews: PreviewProvider {
-    static var previews: some View {
-        ConnexionView()
     }
 }

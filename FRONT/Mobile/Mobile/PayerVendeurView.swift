@@ -39,7 +39,7 @@ struct PayerVendeurView: View {
                                 Text("Voir Historique des achats")
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .font(.system(size: 20, weight: .bold))
+                                    .font(.system(size: 20))
                                     .background(Color.blue)
                                     .foregroundColor(.white)
                                     .cornerRadius(10)

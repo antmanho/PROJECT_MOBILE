@@ -1,71 +1,73 @@
 import SwiftUI
 
 struct SessionView: View {
+    @Binding var selectedView: String
+    @State private var isCreerSessionActive = false
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Image de fond avec opacité faible et dimensions contraintes
-                Image("fond_button")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped() // pour couper l'excès d'image
-                    .opacity(0.15)
-                    .ignoresSafeArea()
-                
-                VStack {
-                    // Titre "SESSION"
-                    Text("SESSION")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
-                        .padding(.top, 40)
-                        .padding(.horizontal)
-                    
-                    Spacer()
-                    
-                    VStack(spacing: 20) {
-                        // Bouton "Creer Session" dans une bulle bleue
-                        Button(action: {
-                            // Action pour "Creer Session"
-                        }) {
-                            Text("Creer Session")
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    // 🔹 Image de fond
+                    Image("fond_button")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .opacity(0.15)
+                        .ignoresSafeArea()
+
+                    VStack {
+                        // 🔹 Titre
+                        Text("SESSION")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                            .padding(.top, 40)
+
+                        Spacer()
+
+                        VStack(spacing: 20) {
+                            // 🔹 Bouton "Créer Session"
+                            Button(action: {
+                                selectedView = "CreerSessionView"
+                            }) {
+                                Text("Créer Session")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.blue)
+                                    .cornerRadius(20)
+                            }
+                            .padding(.horizontal, 20)
+
+
+                            // 🔹 Bouton "Modifier Session" (Action à ajouter)
+                            Button(action: {
+                                selectedView = "ModificationSessionView"
+                            }) {
+                                Text("Modifier Session")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.blue)
+                                    .cornerRadius(20)
+                            }
+                            .padding(.horizontal, 20)
                         }
-                        .background(
-                            Capsule()
-                                .fill(Color.blue)
-                        )
-                        .padding(.horizontal, 20)
-                        
-                        // Bouton "Modifier Session" dans une bulle bleue
-                        Button(action: {
-                            // Action pour "Modifier Session"
-                        }) {
-                            Text("Modifier Session")
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                        }
-                        .background(
-                            Capsule()
-                                .fill(Color.blue)
-                        )
-                        .padding(.horizontal, 20)
+
+                        Spacer()
                     }
-                    
-                    Spacer()
+                    .frame(width: geometry.size.width)
                 }
-                .frame(width: geometry.size.width) // Contraint la largeur du contenu
             }
         }
     }
 }
 
+// 🔹 **Prévisualisation**
 struct SessionView_Previews: PreviewProvider {
     static var previews: some View {
-        SessionView()
+        SessionView(selectedView: .constant("Session"))
     }
 }
