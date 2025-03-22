@@ -1,4 +1,4 @@
-# BOARDLAND - BOARD GAME FESTIVAL MANAGEMENT PLATFORM
+# BOARDLAND - PLATEFORME POUR FESTIVAL DE JEUX
 
 
 | <img src="FRONT/IMAGE_README/top.PNG" alt="Catalogue View" style="width:100%;"> | <div align="center"><img src="FRONT/IMAGE_README/LOGO_BO.PNG" alt="Logo BoardLand" width="60%"><br><strong>RESUME</strong><br><br><p style="color:grey;">BoardLand est une plateforme innovante conçue pour simplifier l'organisation des festivals de jeux de société. Ensemble avec un ami, nous avons développé cette solution afin d’optimiser la gestion des ventes, des dépôts et des finances, tout en garantissant une sécurité renforcée.</p></div> |
