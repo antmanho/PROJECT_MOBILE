@@ -2,24 +2,8 @@ import SwiftUI
 import Charts
 
 struct BilanGrapheView: View {
-    let data: BilanGraphData
+    @ObservedObject var viewModel: BilanGraphViewModel
     let onRetour: () -> Void
-
-    // Calcul du taux de rotation, si totalQuantiteDeposee > 0
-    var tauxRotation: String {
-        guard data.totalQuantiteDeposee > 0 else { return "N/A" }
-        let taux = (Double(data.totalQuantiteVendu) / data.totalQuantiteDeposee) * 100
-        return String(format: "%.0f%%", taux)
-    }
-    
-    // Calculs pour les quantités vendues et non vendues
-    var totalVendu: Int {
-        return data.totalQuantiteVendu
-    }
-    
-    var totalNonVendu: Int {
-        return max(0, Int(data.totalQuantiteDeposee) - data.totalQuantiteVendu)
-    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -43,18 +27,18 @@ struct BilanGrapheView: View {
                 
                 // Graphique linéaire basé sur les données retournées par le back
                 Chart {
-                    ForEach(data.listeX.indices, id: \.self) { index in
-                        if index < data.listeYSomme.count {
+                    ForEach(viewModel.chartData.listeX.indices, id: \.self) { index in
+                        if index < viewModel.chartData.listeYSomme.count {
                             LineMark(
-                                x: .value("Index", data.listeX[index]),
-                                y: .value("Prix cumulé", data.listeYSomme[index])
+                                x: .value("Index", viewModel.chartData.listeX[index]),
+                                y: .value("Prix cumulé", viewModel.chartData.listeYSomme[index])
                             )
                             .foregroundStyle(.blue)
                             .symbol(Circle())
                         }
                     }
                     // Règle pour afficher les charges fixes
-                    RuleMark(y: .value("Charges fixes", data.chargesFixes))
+                    RuleMark(y: .value("Charges fixes", viewModel.chartData.chargesFixes))
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [5]))
                         .foregroundStyle(.yellow)
                         .annotation(position: .top, alignment: .leading) {
@@ -81,23 +65,23 @@ struct BilanGrapheView: View {
                 
                 HStack {
                     Chart {
-                        SectorMark(angle: .value("Vendu", totalVendu))
+                        SectorMark(angle: .value("Vendu", viewModel.totalVendu))
                             .foregroundStyle(.blue)
-                        SectorMark(angle: .value("Non vendu", totalNonVendu))
+                        SectorMark(angle: .value("Non vendu", viewModel.totalNonVendu))
                             .foregroundStyle(.red.opacity(0.6))
                     }
                     .frame(width: 130, height: 130)
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        Label("Vendu (\(totalVendu))", systemImage: "circle.fill")
+                        Label("Vendu (\(viewModel.totalVendu))", systemImage: "circle.fill")
                             .foregroundColor(.blue)
-                        Label("Non vendu (\(totalNonVendu))", systemImage: "circle.fill")
+                        Label("Non vendu (\(viewModel.totalNonVendu))", systemImage: "circle.fill")
                             .foregroundColor(.red.opacity(0.6))
                     }
                 }
                 
                 // Affichage du taux de rotation
-                Text("Taux de rotation des stocks : \(tauxRotation)")
+                Text("Taux de rotation des stocks : \(viewModel.tauxRotation)")
                     .font(.system(size: 14, weight: .medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -113,6 +97,9 @@ struct BilanGrapheView: View {
                     .padding(.bottom, 25)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
+            .onAppear {
+                viewModel.loadBilanData()
+            }
         }
     }
 }
@@ -128,6 +115,7 @@ struct BilanGrapheView_Previews: PreviewProvider {
             totalQuantiteVendu: 50,
             chargesFixes: 25.0
         )
-        return BilanGrapheView(data: data, onRetour: { })
+        let viewModel = BilanGraphViewModel(data: data)
+        return BilanGrapheView(viewModel: viewModel, onRetour: { })
     }
 }
