@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import UserNotifications
 
+
 struct DepotView: View {
     @State private var emailVendeur: String = ""
     @State private var nomJeu: String = ""
@@ -20,24 +21,11 @@ struct DepotView: View {
     // Liste des sessions chargées depuis le back
     @State private var sessions: [Session] = []
     
-    // Pour afficher des alertes suite aux actions back
-    @State private var alertMessage: String = ""
-    @State private var showAlert: Bool = false
-
-    // Binding pour le Picker de session.
-    // Utilise -1 comme valeur par défaut lorsque aucune session n'est sélectionnée.
-    private var sessionPickerBinding: Binding<Int> {
-        Binding<Int>(
-            get: { selectedSession?.id ?? -1 },
-            set: { newValue in
-                if newValue == -1 {
-                    selectedSession = nil
-                } else {
-                    selectedSession = sessions.first { $0.id == newValue }
-                }
-            }
-        )
-    }
+    // Message d'erreur inline
+    @State private var errorMessage: String = ""
+    
+    // Base URL de votre back
+    let baseURL = BaseUrl.lien
     
     var body: some View {
         GeometryReader { geometry in
@@ -47,6 +35,7 @@ struct DepotView: View {
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack {
@@ -57,12 +46,28 @@ struct DepotView: View {
                                 .font(.system(size: 24, weight: .bold))
                                 .padding(.top, 10)
                             
+                            // Message d'erreur en rouge
+                            if !errorMessage.isEmpty {
+                                Text(errorMessage)
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal)
+                            }
+                            
                             Toggle("Mise en vente immédiate", isOn: $estEnVente)
                                 .tint(.blue)
                                 .padding(.horizontal)
                             
-                            // Picker pour choisir la session
-                            Picker("Sélectionnez une session", selection: sessionPickerBinding) {
+                            // Picker pour choisir une session
+                            Picker("Sélectionnez une session", selection: Binding(
+                                get: { selectedSession?.id ?? -1 },
+                                set: { newValue in
+                                    if newValue == -1 {
+                                        selectedSession = nil
+                                    } else {
+                                        selectedSession = sessions.first { $0.id == newValue }
+                                    }
+                                }
+                            )) {
                                 Text("Sélectionnez une session").tag(-1)
                                 ForEach(sessions, id: \.id) { session in
                                     Text(session.nom).tag(session.id)
@@ -138,7 +143,7 @@ struct DepotView: View {
                                     .padding(.horizontal)
                                 }
                                 
-                                // Affichage de l'image choisie
+                                // Affichage de l'image sélectionnée
                                 if let selectedImage {
                                     Image(uiImage: selectedImage)
                                         .resizable()
@@ -150,6 +155,17 @@ struct DepotView: View {
                             }
                             
                             Button("Ajouter") {
+                                errorMessage = ""
+                                // Validation des champs obligatoires
+                                if emailVendeur.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                    nomJeu.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                    prixUnit.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                    quantiteDeposee.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                    selectedSession == nil {
+                                    errorMessage = "Veuillez remplir tous les champs obligatoires."
+                                    scheduleLocalNotification(title: "Erreur", message: errorMessage)
+                                    return
+                                }
                                 addDepot()
                             }
                             .frame(maxWidth: .infinity)
@@ -174,32 +190,18 @@ struct DepotView: View {
                 }
             }
         }
-        .onChange(of: photosPickerItem) { newItem in
-            Task {
-                if let loadedImageData = try? await newItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: loadedImageData) {
-                    print("Image chargée avec succès, taille : \(uiImage.size)")
-                    selectedImage = uiImage
-                } else {
-                    print("Échec du chargement de l'image.")
-                }
-            }
-        }
         .onAppear {
             loadSessions()
-        }
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Information"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
         }
     }
     
-    // Charge les sessions depuis le back
     private func loadSessions() {
-        guard let url = URL(string: "http://localhost:3000/get_all_sessions") else {
+        guard let url = URL(string: "\(baseURL)/get_all_sessions") else {
             print("URL sessions invalide")
             return
         }
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
                 print("Erreur lors du chargement des sessions: \(error)")
                 return
@@ -212,7 +214,6 @@ struct DepotView: View {
                 let sessionsArray = try JSONDecoder().decode([Session].self, from: data)
                 DispatchQueue.main.async {
                     sessions = sessionsArray
-                    // Ne pas affecter automatiquement la première session.
                 }
             } catch {
                 print("Erreur de décodage des sessions: \(error)")
@@ -220,22 +221,19 @@ struct DepotView: View {
         }.resume()
     }
     
-    // Fonction pour envoyer les données vers /depot
     private func addDepot() {
-        guard let url = URL(string: "http://localhost:3000/depot") else {
-            alertMessage = "URL invalide pour depot"
-            showAlert = true
+        guard let url = URL(string: "\(baseURL)/depot") else {
+            errorMessage = "URL invalide pour depot"
+            scheduleLocalNotification(title: "Erreur", message: errorMessage)
             return
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
-        // Création d'une boundary pour le multipart/form-data
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
-        // Construction du corps de la requête
         var body = Data()
         
         func appendFormField(name: String, value: String) {
@@ -255,7 +253,6 @@ struct DepotView: View {
             appendFormField(name: "num_session", value: "\(session.id)")
         }
         
-        // Ajout de l'image si disponible
         if let image = selectedImage,
            let imageData = image.jpegData(compressionQuality: 0.8) {
             body.append("--\(boundary)\r\n".data(using: .utf8)!)
@@ -265,15 +262,13 @@ struct DepotView: View {
             body.append("\r\n".data(using: .utf8)!)
         }
         
-        // Fermeture du body
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         
-        // N'assigner pas manuellement request.httpBody, laissez uploadTask utiliser le body fourni
-        URLSession.shared.uploadTask(with: request, from: body) { data, response, error in
+        URLSession.shared.uploadTask(with: request, from: body) { data, _, error in
             if let error = error {
                 DispatchQueue.main.async {
-                    alertMessage = "Erreur lors de l'ajout: \(error.localizedDescription)"
-                    showAlert = true
+                    errorMessage = "Erreur lors de l'ajout: \(error.localizedDescription)"
+                    scheduleLocalNotification(title: "Erreur", message: errorMessage)
                 }
                 return
             }
@@ -281,28 +276,51 @@ struct DepotView: View {
                   let responseJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let message = responseJSON["message"] as? String else {
                 DispatchQueue.main.async {
-                    alertMessage = "Réponse invalide du serveur."
-                    showAlert = true
+                    errorMessage = "Réponse invalide du serveur."
+                    scheduleLocalNotification(title: "Erreur", message: errorMessage)
                 }
                 return
             }
             DispatchQueue.main.async {
-                alertMessage = message
-                showAlert = true
-                // Réinitialisation du formulaire (optionnel)
-                emailVendeur = ""
-                nomJeu = ""
-                prixUnit = ""
-                quantiteDeposee = ""
-                editeur = ""
-                description = ""
-                selectedImage = nil
-                photosPickerItem = nil
+                scheduleLocalNotification(title: "Succès", message: message)
+                resetForm()
             }
         }.resume()
     }
-
+    
+    private func resetForm() {
+        emailVendeur = ""
+        nomJeu = ""
+        prixUnit = ""
+        quantiteDeposee = ""
+        editeur = ""
+        description = ""
+        selectedImage = nil
+        photosPickerItem = nil
+        estEnVente = false
+        selectedSession = nil
+    }
+    
+    private func scheduleLocalNotification(title: String, message: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        content.sound = UNNotificationSound.default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString,
+                                            content: content,
+                                            trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+    }
 }
+
+struct DepotView_Previews: PreviewProvider {
+    static var previews: some View {
+        DepotView()
+    }
+}
+
 
 struct Session: Codable, Identifiable {
     var id: Int

@@ -285,7 +285,7 @@ struct Menu: View {
                                         selectedView = "ConnexionView"
                                         
                                         // Préparer et envoyer la requête POST pour la déconnexion
-                                        guard let url = URL(string: "http://localhost:3000/deconnexion") else {
+                                        guard let url = URL(string: "\(BaseUrl.lien)/deconnexion") else {
                                             print("URL invalide")
                                             return
                                         }

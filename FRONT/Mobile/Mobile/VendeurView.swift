@@ -28,7 +28,7 @@ class VendeurViewModel: ObservableObject {
     @Published var emailConnecte: String? = nil
     @Published var errorMessage: String? = nil
     
-    private let baseURL = "http://localhost:3000"
+    private let baseURL = BaseUrl.lien
 
     init() {
         fetchCatalogue()
@@ -175,7 +175,7 @@ struct VendeurView: View {
                         ForEach(viewModel.soldGames) { soldGame in
                             CardView(
                                 title: soldGame.nomJeu,
-                                imageUrl: "http://localhost:3000" + soldGame.photoPath,
+                                imageUrl: BaseUrl.lien + soldGame.photoPath,
                                 details: """
                                 Prix : \(String(format: "%.2f", soldGame.prixUnit)) €
                                 Quantité vendue : \(soldGame.quantiteVendue)
@@ -200,7 +200,7 @@ struct VendeurView: View {
                                 NavigationLink(destination: DetailArticleView(gameId: game.id)) {
                                     CardView(
                                         title: game.nomJeu,
-                                        imageUrl: "http://localhost:3000" + game.photoPath,
+                                        imageUrl: BaseUrl.lien + game.photoPath,
                                         details: """
                                   N°article : \(game.id)
                                   \(String(format: "%.2f", game.prixFinal)) €

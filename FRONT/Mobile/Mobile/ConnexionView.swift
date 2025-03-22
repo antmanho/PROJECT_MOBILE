@@ -1,40 +1,38 @@
 import SwiftUI
 
-
-
 struct ConnexionView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String? = nil
 
-    // 🔁 Callbacks pour navigation
     let onMotDePasseOublie: () -> Void
     let onInscription: () -> Void
-    // Callback appelé lorsque la connexion est réussie, avec le rôle obtenu
     let onLoginSuccess: (String) -> Void
 
     var body: some View {
         VStack {
-            Spacer()
-
-            VStack(spacing: 20) {
-                VStack {
+            Spacer(minLength: 20)
+            
+            // Conteneur commun à largeur fixe
+            VStack(spacing: 16) {
+                // Premier cadre (Formulaire de connexion)
+                VStack(spacing: 12) {
                     Text("CONNEXION")
-                        .font(.custom("Bangers", size: 30))
-                        .padding(.bottom, 10)
-
-                    VStack {
+                        .font(.custom("Bangers", size: 26))
+                        .padding(.bottom, 6)
+                    
+                    VStack(spacing: 8) {
                         TextField("Email", text: $email)
-                            .padding()
+                            .padding(8)
                             .background(Color.gray.opacity(0.2))
                             .cornerRadius(5)
                             .autocapitalization(.none)
-
+                        
                         SecureField("Mot de passe", text: $password)
-                            .padding()
+                            .padding(8)
                             .background(Color.gray.opacity(0.2))
                             .cornerRadius(5)
-
+                        
                         Button(action: {
                             guard !email.isEmpty, !password.isEmpty else {
                                 errorMessage = "Veuillez remplir tous les champs"
@@ -42,8 +40,8 @@ struct ConnexionView: View {
                             }
                             errorMessage = nil
                             
-                            // Préparation de la requête de connexion
-                            guard let url = URL(string: "http://localhost:3000/api/connexion") else {
+                            // Requête de connexion
+                            guard let url = URL(string: "\(BaseUrl.lien)/api/connexion") else {
                                 errorMessage = "URL invalide"
                                 return
                             }
@@ -70,8 +68,8 @@ struct ConnexionView: View {
                                     return
                                 }
                                 
-                                // Si connexion réussie, appel à /api/user-info pour obtenir le rôle
-                                guard let infoUrl = URL(string: "http://localhost:3000/api/user-info") else { return }
+                                // Récupération du rôle via /api/user-info
+                                guard let infoUrl = URL(string: "\(BaseUrl.lien)/api/user-info") else { return }
                                 URLSession.shared.dataTask(with: infoUrl) { infoData, infoResponse, infoError in
                                     if let infoError = infoError {
                                         DispatchQueue.main.async {
@@ -88,7 +86,6 @@ struct ConnexionView: View {
                                         return
                                     }
                                     DispatchQueue.main.async {
-                                        // Appel du callback avec le rôle obtenu
                                         onLoginSuccess(role)
                                     }
                                 }.resume()
@@ -97,72 +94,67 @@ struct ConnexionView: View {
                         }) {
                             Text("Se connecter")
                                 .foregroundColor(.white)
-                                .padding()
+                                .padding(10)
                                 .frame(maxWidth: .infinity)
                                 .background(Color.gray)
                                 .cornerRadius(5)
                         }
-                        .padding(.top, 10)
-
+                        .padding(.top, 8)
+                        
                         if let errorMessage = errorMessage {
                             Text(errorMessage)
                                 .foregroundColor(.red)
-                                .padding(.top, 5)
+                                .padding(.top, 4)
                         }
                     }
-                    .padding()
-
+                    .padding(10)
+                    
                     DividerView()
-
-                    // 🔗 Lien "Mot de passe oublié"
+                    
                     Button(action: {
                         onMotDePasseOublie()
                     }) {
                         Text("Mot de passe oublié ?")
-                            .foregroundColor(Color.blue)
+                            .foregroundColor(.blue)
                     }
-                    .padding(.top, 10)
+                    .padding(.top, 8)
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
-
-                // 🔗 Lien vers InscriptionView
+                .border(Color.black, width: 1)
+                
+                // Second cadre (Lien vers inscription)
                 VStack {
                     HStack {
                         Text("Vous n'avez pas de compte ?")
-                            .minimumScaleFactor(0.9)
-
                         Button(action: {
-                            onInscription() // Redirection vers InscriptionView
+                            onInscription()
                         }) {
                             Text("Inscrivez-vous")
                                 .foregroundColor(.blue)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.9)
                         }
                     }
-                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
+                .border(Color.black, width: 1)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.9)
+            .frame(width: UIScreen.main.bounds.width * 0.8)
             .fixedSize(horizontal: false, vertical: true)
-
-            Spacer()
-
+            
+            Spacer(minLength: 20)
+            
             Text("Barbedet Anthony & Delclaud Corentin production | Polytech school | © 2024 Boardland")
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 15)
+                .padding(.bottom, 20)
         }
+        .frame(maxWidth: .infinity, alignment: .center) // Centre le contenu
     }
 }
-
 
 struct DividerView: View {
     var body: some View {
@@ -171,12 +163,12 @@ struct DividerView: View {
                 .frame(height: 1)
                 .foregroundColor(.black)
             Text("OU")
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 6)
                 .background(Color.white)
             Rectangle()
                 .frame(height: 1)
                 .foregroundColor(.black)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
     }
 }

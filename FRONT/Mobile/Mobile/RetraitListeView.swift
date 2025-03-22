@@ -26,6 +26,7 @@ struct RetraitListeView: View {
     let onInvité: () -> Void   // Par exemple, pour retourner en mode invité
 
     @State private var jeux: [Jeu] = []
+    @State private var errorMessage: String = ""
     
     var body: some View {
         GeometryReader { geometry in
@@ -51,6 +52,13 @@ struct RetraitListeView: View {
                         }
                         .padding(.top, 10)
                         
+                        // Message d'erreur inline en rouge
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .padding(.horizontal)
+                        }
+                        
                         // Tableau listant les jeux
                         VStack(spacing: 0) {
                             // Ligne d'entête
@@ -75,14 +83,22 @@ struct RetraitListeView: View {
                                         .border(Color.black)
                                 }
                             }
-
                         }
                         .border(Color.black)
                         .frame(width: geometry.size.width * 0.9)
                         .padding(.horizontal, geometry.size.width * 0.05)
                         
                         // Bouton pour retirer les jeux sélectionnés
-                        Button(action: retirerJeux) {
+                        Button(action: {
+                            errorMessage = ""
+                            // Vérification : au moins un jeu doit être sélectionné
+                            if !jeux.contains(where: { $0.selectionne }) {
+                                errorMessage = "Veuillez sélectionner au moins un jeu à retirer."
+                                scheduleLocalNotification(title: "Erreur", message: errorMessage)
+                                return
+                            }
+                            retirerJeux()
+                        }) {
                             Text("Retirer les jeux sélectionnés")
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -101,13 +117,13 @@ struct RetraitListeView: View {
         }
     }
     
-    // Fonction pour récupérer les jeux du vendeur depuis le backend
+    // Récupération des jeux du vendeur depuis le backend
     private func fetchJeux() {
-        guard let url = URL(string: "http://localhost:3000/retrait-liste/\(email)") else {
+        guard let url = URL(string: "\(BaseUrl.lien)/retrait-liste/\(email)") else {
             print("URL invalide")
             return
         }
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
                 print("Erreur lors du chargement des jeux: \(error)")
                 return
@@ -127,20 +143,25 @@ struct RetraitListeView: View {
         }.resume()
     }
     
-    // Fonction qui envoie une requête pour retirer chaque jeu sélectionné
+    // Retrait des jeux sélectionnés
     private func retirerJeux() {
-        // Pour chaque jeu sélectionné, envoyer une requête POST vers /retrait
         for jeu in jeux where jeu.selectionne {
             retirerJeu(jeu: jeu)
         }
-        // Rafraîchir la liste après les suppressions
-        fetchJeux()
-        scheduleNotification()
+        DispatchQueue.main.async {
+            // Réinitialisation de la sélection
+            for index in jeux.indices {
+                jeux[index].selectionne = false
+            }
+            scheduleLocalNotification(title: "Succès", message: "Les jeux sélectionnés ont été retirés avec succès.")
+            // Recharge de la liste
+            fetchJeux()
+        }
     }
     
     // Envoi d'une requête POST pour retirer un jeu
     private func retirerJeu(jeu: Jeu) {
-        guard let url = URL(string: "http://localhost:3000/retrait") else {
+        guard let url = URL(string: "\(BaseUrl.lien)/retrait") else {
             print("URL invalide pour retrait")
             return
         }
@@ -148,14 +169,13 @@ struct RetraitListeView: View {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // Ici, le nombre de checkbox sélectionné est fixé à 1, car chaque jeu représente une unité (duplication effectuée côté back)
         let body: [String: Any] = [
             "id_stock": jeu.id_stock,
             "nombre_checkbox_selectionne_cet_id": 1
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        URLSession.shared.dataTask(with: request) { data, _, error in
             if let error = error {
                 print("Erreur lors du retrait du jeu \(jeu.id_stock): \(error)")
                 return
@@ -167,15 +187,14 @@ struct RetraitListeView: View {
         }.resume()
     }
     
-    private func scheduleNotification() {
+    private func scheduleLocalNotification(title: String, message: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Retrait effectué"
-        content.body = "Les jeux sélectionnés ont été retirés avec succès."
+        content.title = title
+        content.body = message
         content.sound = UNNotificationSound.default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-
         UNUserNotificationCenter.current().add(request)
     }
     

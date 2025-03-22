@@ -4,10 +4,8 @@ import UserNotifications
 struct EnregistrerAchatView: View {
     @State private var idStock: String = ""
     @State private var quantiteVendue: String = ""
+    @State private var errorMessage: String = ""
     let onConfirmerAchat: (String, String) -> Void
-    
-    @State private var alertMessage: String = ""
-    @State private var showAlert: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -17,7 +15,6 @@ struct EnregistrerAchatView: View {
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
-                
                 ScrollView {
                     VStack(spacing: 20) {
                         Spacer(minLength: 40)
@@ -27,17 +24,31 @@ struct EnregistrerAchatView: View {
                                 .font(.system(size: 24, weight: .bold))
                                 .padding(.top, 10)
                             
+                            // Message d'erreur inline en rouge
+                            if !errorMessage.isEmpty {
+                                Text(errorMessage)
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal)
+                            }
+                            
                             TextField("ID Stock", text: $idStock)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .padding(.horizontal)
                                 .keyboardType(.numberPad)
                             
                             TextField("Quantité Vendue", text: $quantiteVendue)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .padding(.horizontal)
                                 .keyboardType(.numberPad)
                             
                             Button {
+                                errorMessage = ""
+                                // Vérification des champs obligatoires
+                                if idStock.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                    quantiteVendue.trimmingCharacters(in: .whitespaces).isEmpty {
+                                    errorMessage = "Veuillez remplir tous les champs obligatoires."
+                                    return
+                                }
                                 confirmerAchat()
                             } label: {
                                 Text("Confirmer l’achat")
@@ -64,19 +75,18 @@ struct EnregistrerAchatView: View {
                 }
             }
         }
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Information"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        .onAppear {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
         }
     }
     
     private func confirmerAchat() {
-        guard let url = URL(string: "http://localhost:3000/enregistrer-achat") else {
-            alertMessage = "URL invalide"
-            showAlert = true
+        guard let url = URL(string: "\(BaseUrl.lien)/enregistrer-achat") else {
+            errorMessage = "URL invalide"
+            scheduleLocalNotification(title: "Erreur", message: errorMessage)
             return
         }
         
-        // Préparer le corps de la requête
         let body: [String: Any] = [
             "id_stock": idStock,
             "quantite_vendu": quantiteVendue
@@ -90,8 +100,8 @@ struct EnregistrerAchatView: View {
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 DispatchQueue.main.async {
-                    alertMessage = "Erreur: \(error.localizedDescription)"
-                    showAlert = true
+                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    scheduleLocalNotification(title: "Erreur", message: errorMessage)
                 }
                 return
             }
@@ -99,41 +109,31 @@ struct EnregistrerAchatView: View {
                   let responseJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let message = responseJSON["message"] as? String else {
                 DispatchQueue.main.async {
-                    alertMessage = "Réponse invalide du serveur"
-                    showAlert = true
+                    errorMessage = "Réponse invalide du serveur"
+                    scheduleLocalNotification(title: "Erreur", message: errorMessage)
                 }
                 return
             }
             DispatchQueue.main.async {
-                alertMessage = message
-                showAlert = true
-                scheduleNotification()
+                scheduleLocalNotification(title: "Succès", message: message)
+                // Réinitialiser les champs du formulaire
+                idStock = ""
+                quantiteVendue = ""
             }
         }.resume()
     }
     
-    private func scheduleNotification() {
+    private func scheduleLocalNotification(title: String, message: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Achat enregistré"
-        content.body = "Votre achat a été enregistré avec succès."
+        content.title = title
+        content.body = message
         content.sound = UNNotificationSound.default
-
+        
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Erreur notification: \(error.localizedDescription)")
-            }
-        }
+        let request = UNNotificationRequest(identifier: UUID().uuidString,
+                                            content: content,
+                                            trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request)
     }
 }
-
-struct EnregistrerAchatView_Previews: PreviewProvider {
-    static var previews: some View {
-        EnregistrerAchatView(onConfirmerAchat: { id, quantite in
-            print("Achat confirmé : ID Stock \(id), Quantité \(quantite)")
-        })
-    }
-}
-

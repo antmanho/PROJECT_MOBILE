@@ -4,7 +4,7 @@ struct MiseEnVenteView: View {
     @State private var games: [Game] = []
     @State private var searchText: String = ""
 
-    let baseImageURL = "http://localhost:3000"
+    let baseImageURL = BaseUrl.lien
     let columns = [GridItem(.adaptive(minimum: 160), spacing: 10)]
     var onGameSelected: (Game) -> Void = { _ in }
 

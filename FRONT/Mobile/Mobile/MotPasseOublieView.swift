@@ -1,11 +1,9 @@
 import SwiftUI
+import UserNotifications
 
 struct MotPasseOublieView: View {
     @State private var email: String = ""
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    
-    let onRetourDynamic: () -> Void // 🔁 Retour dynamique vers la dernière page
+    let onRetourDynamic: () -> Void // Retour dynamique vers la dernière page
     let onInscription: () -> Void
 
     var body: some View {
@@ -13,56 +11,55 @@ struct MotPasseOublieView: View {
             // Bouton retour en haut à gauche
             HStack {
                 Button(action: {
-                    onRetourDynamic() // Retour vers la dernière page visitée
+                    onRetourDynamic()
                 }) {
                     Image("retour")
                         .resizable()
-                        .frame(width: 30, height: 30)
-                        .padding()
+                        .frame(width: 28, height: 28)
+                        .padding(6)
                 }
                 Spacer()
             }
             .frame(maxWidth: .infinity)
-
-            Spacer()
-
-            VStack(spacing: 20) {
-                VStack(spacing: 15) {
-                    Text("RECUPERATION")
-                        .font(.custom("Bangers", size: 30))
-
+            
+            Spacer(minLength: 20)
+            
+            // Conteneur commun pour les deux cadres avec largeur fixe
+            VStack(spacing: 12) {
+                // Premier cadre (Formulaire de récupération)
+                VStack(spacing: 8) {
+                    Text("RÉCUPÉRATION")
+                        .font(.custom("Bangers", size: 26))
+                    
                     Image("lock")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 80)
-                        .padding(.top, 5)
-
+                        .frame(width: 70)
+                        .padding(.top, 4)
+                    
                     Text("Problèmes de connexion ?")
                         .font(.headline)
-
-                    Text("Entrez votre adresse e-mail, votre numéro de téléphone ou votre nom d’utilisateur, et nous vous enverrons un lien pour récupérer votre compte.")
+                    
+                    Text("Entrez votre adresse e-mail et nous vous enverrons un lien pour récupérer votre compte.")
                         .font(.footnote)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-
+                        .padding(.horizontal, 10)
+                    
                     TextField("Email", text: $email)
-                        .padding()
+                        .padding(8)
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(5)
                         .autocapitalization(.none)
                         .keyboardType(.emailAddress)
-
+                    
                     Button(action: {
                         guard !email.isEmpty else {
-                            alertMessage = "Veuillez entrer un email valide."
-                            showAlert = true
+                            scheduleNotification(title: "Erreur", message: "Veuillez entrer un email valide.")
                             return
                         }
-                        // Préparation de la requête POST vers /mdp_oublie
-                        guard let url = URL(string: "http://localhost:3000/mdp_oublie") else {
-                            alertMessage = "URL invalide."
-                            showAlert = true
+                        guard let url = URL(string: "\(BaseUrl.lien)/mdp_oublie") else {
+                            scheduleNotification(title: "Erreur", message: "URL invalide.")
                             return
                         }
                         var request = URLRequest(url: url)
@@ -74,34 +71,30 @@ struct MotPasseOublieView: View {
                         
                         URLSession.shared.dataTask(with: request) { data, response, error in
                             if let error = error {
-                                print("Erreur lors de la récupération du mot de passe: \(error)")
                                 DispatchQueue.main.async {
-                                    alertMessage = "Erreur: \(error.localizedDescription)"
-                                    showAlert = true
+                                    scheduleNotification(title: "Erreur", message: "Erreur: \(error.localizedDescription)")
                                 }
                                 return
                             }
-                            // Vous pouvez éventuellement traiter la réponse ici
                             DispatchQueue.main.async {
-                                alertMessage = "Un lien de réinitialisation du mot de passe a été envoyé à votre adresse."
-                                showAlert = true
+                                scheduleNotification(title: "Succès", message: "Un mail de récupération vous a été envoyé.")
                             }
                         }.resume()
                         
                     }) {
                         Text("Récupération mot de passe")
                             .foregroundColor(.white)
-                            .padding()
+                            .padding(10)
                             .frame(maxWidth: .infinity)
                             .background(Color.gray)
                             .cornerRadius(5)
                     }
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
-
-                // Lien vers InscriptionView
+                .padding(10)
+                .frame(maxWidth: .infinity) // Force à occuper toute la largeur du conteneur
+                .border(Color.black, width: 1)
+                
+                // Deuxième cadre (Lien vers Inscription)
                 VStack {
                     HStack {
                         Text("Vous n'avez pas de compte ?")
@@ -114,23 +107,40 @@ struct MotPasseOublieView: View {
                                 .font(.footnote)
                         }
                     }
+                    .frame(maxWidth: .infinity) // Force à occuper toute la largeur
+                    .padding(.vertical, 8)
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
+                .border(Color.black, width: 1)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.9)
-
-            Spacer()
-
+            .frame(width: UIScreen.main.bounds.width * 0.8) // Largeur commune
+            .fixedSize(horizontal: false, vertical: true)
+            
+            Spacer(minLength: 20)
+            
             Text("Barbedet Anthony & Delclaud Corentin production | Polytech school | © 2024 Boardland")
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .padding(.bottom, 15)
+                .padding(.bottom, 18)
         }
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Information"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        .alert(isPresented: .constant(false)) {  // Pas d'alerte affichée, notifications locales utilisées
+            Alert(title: Text("Information"), message: Text(""), dismissButton: .default(Text("OK")))
         }
+    }
+    
+    // Fonction pour déclencher une notification locale
+    private func scheduleNotification(title: String, message: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = message
+        content.sound = UNNotificationSound.default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString,
+                                            content: content,
+                                            trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
     }
 }

@@ -11,7 +11,7 @@ struct BilanView: View {
     let onAfficherBilanGraphe: (BilanGraphData) -> Void
     
     // Base URL de votre back
-    let baseURL = "http://localhost:3000"
+    let baseURL = BaseUrl.lien
     
     var body: some View {
         GeometryReader { geometry in

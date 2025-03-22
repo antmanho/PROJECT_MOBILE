@@ -2,13 +2,11 @@ import SwiftUI
 
 struct CheckEmailView: View {
     @State private var codeRecu: String = ""
-    @State private var showAlert = false
     @State private var errorMessage: String? = nil
 
     let email: String
-    let onRetour: () -> Void    // Retour uniquement vers InscriptionView
-    let onInvité: () -> Void    // Redirection vers le mode invité
-    // Callback appelé lorsque la vérification est réussie et qui fournit le rôle de l'utilisateur
+    let onRetour: () -> Void
+    let onInvité: () -> Void
     let onVerificationSuccess: (String) -> Void
 
     var body: some View {
@@ -16,55 +14,54 @@ struct CheckEmailView: View {
             // Bouton retour en haut à gauche
             HStack {
                 Button(action: {
-                    onRetour() // Retour vers InscriptionView
+                    onRetour()
                 }) {
                     Image("retour")
                         .resizable()
-                        .frame(width: 30, height: 30)
-                        .padding()
+                        .frame(width: 28, height: 28)
+                        .padding(6)
                 }
                 Spacer()
             }
             .frame(maxWidth: .infinity)
-
-            Spacer()
-
-            VStack(spacing: 20) {
-                VStack(spacing: 15) {
+            
+            Spacer(minLength: 20)
+            
+            // Conteneur commun à largeur fixe
+            VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     Text("VÉRIFICATION EMAIL")
-                        .font(.custom("Bangers", size: 30))
-
+                        .font(.custom("Bangers", size: 26))
+                    
                     Image("lock")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 80)
-                        .padding(.top, 5)
-
+                        .frame(width: 70)
+                        .padding(.top, 4)
+                    
                     Text("Confirmation de l'email")
                         .font(.headline)
-
-                    Text("Afin de s'assurer qu'il s'agit bien de votre adresse email, veuillez entrer le code que vous venez de recevoir par e-mail.")
+                    
+                    Text("Afin de confirmer votre adresse, entrez le code reçu par e-mail.")
                         .font(.footnote)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-
-                    TextField("Code reçu par mail", text: $codeRecu)
-                        .padding()
+                        .padding(.horizontal, 10)
+                    
+                    TextField("Code reçu", text: $codeRecu)
+                        .padding(8)
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(5)
                         .keyboardType(.numberPad)
-
+                    
                     Button(action: {
                         guard !codeRecu.isEmpty else {
                             errorMessage = "Veuillez entrer un code valide"
-                            showAlert = true
                             return
                         }
-                        // Appel au back pour vérifier le code
-                        guard let url = URL(string: "http://localhost:3000/verification-email") else {
+                        // Appel du backend pour vérifier le code...
+                        guard let url = URL(string: "\(BaseUrl.lien)/verification-email") else {
                             errorMessage = "URL invalide"
-                            showAlert = true
                             return
                         }
                         var request = URLRequest(url: url)
@@ -80,35 +77,26 @@ struct CheckEmailView: View {
                             if let error = error {
                                 DispatchQueue.main.async {
                                     errorMessage = "Erreur: \(error.localizedDescription)"
-                                    showAlert = true
-                                }
-                                return
-                            }
-                            guard let data = data,
-                                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                                DispatchQueue.main.async {
-                                    errorMessage = "Réponse invalide du serveur."
-                                    showAlert = true
                                 }
                                 return
                             }
                             
-                            // Si le serveur renvoie un message, nous considérons que la vérification est réussie
+                            guard let data = data,
+                                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                                DispatchQueue.main.async {
+                                    errorMessage = "Réponse invalide du serveur."
+                                }
+                                return
+                            }
+                            
                             if let message = json["message"] as? String {
                                 print("Réponse verification-email: \(message)")
-                                // Ensuite, appel à /api/user-info pour obtenir le rôle
-                                guard let infoUrl = URL(string: "http://localhost:3000/api/user-info") else {
-                                    DispatchQueue.main.async {
-                                        errorMessage = "URL invalide pour user-info"
-                                        showAlert = true
-                                    }
-                                    return
-                                }
+                                // Récupération du rôle via /api/user-info
+                                guard let infoUrl = URL(string: "\(BaseUrl.lien)/api/user-info") else { return }
                                 URLSession.shared.dataTask(with: infoUrl) { infoData, infoResponse, infoError in
                                     if let infoError = infoError {
                                         DispatchQueue.main.async {
-                                            errorMessage = "Erreur user-info: \(infoError.localizedDescription)"
-                                            showAlert = true
+                                            errorMessage = "Erreur info: \(infoError.localizedDescription)"
                                         }
                                         return
                                     }
@@ -117,48 +105,52 @@ struct CheckEmailView: View {
                                           let role = infoJson["role"] as? String else {
                                         DispatchQueue.main.async {
                                             errorMessage = "Impossible de récupérer le rôle."
-                                            showAlert = true
                                         }
                                         return
                                     }
                                     DispatchQueue.main.async {
-                                        // Appel du callback avec le rôle obtenu
                                         onVerificationSuccess(role)
                                     }
                                 }.resume()
                             } else {
                                 DispatchQueue.main.async {
                                     errorMessage = "Code de vérification invalide."
-                                    showAlert = true
                                 }
                             }
                         }.resume()
+                        
                     }) {
                         Text("Vérifier")
                             .foregroundColor(.white)
-                            .padding()
+                            .padding(10)
                             .frame(maxWidth: .infinity)
                             .background(Color.gray)
                             .cornerRadius(5)
                     }
+                    
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding(.top, 4)
+                    }
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
+                .border(Color.black, width: 1)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.9)
-
-            Spacer()
-
+            .frame(width: UIScreen.main.bounds.width * 0.8)
+            
+            Spacer(minLength: 20)
+            
             Text("Barbedet Anthony & Delclaud Corentin production | Polytech school | © 2024 Boardland")
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .padding(.bottom, 15)
+                .padding(.bottom, 20)
         }
-        .alert(isPresented: $showAlert) {
+        .frame(maxWidth: .infinity, alignment: .center)
+        .alert(isPresented: .constant(false)) {  // Les notifications locales sont utilisées
             Alert(title: Text("Erreur"), message: Text(errorMessage ?? "Veuillez entrer un code valide"), dismissButton: .default(Text("OK")))
         }
     }
 }
-

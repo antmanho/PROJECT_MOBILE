@@ -8,7 +8,7 @@ struct DetailArticleView: View {
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     
-    let baseURL = "http://localhost:3000"
+    let baseURL = BaseUrl.lien
     
     var body: some View {
         VStack {

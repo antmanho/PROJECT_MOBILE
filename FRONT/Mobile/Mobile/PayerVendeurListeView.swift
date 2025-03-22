@@ -33,23 +33,22 @@ struct Vente: Identifiable, Decodable {
 }
 
 
-
 struct PayerVendeurListeView: View {
     let email: String
     let onRetour: () -> Void
 
     @State private var historiqueVentes: [Vente] = []
-
-    // Base URL à adapter si nécessaire
-    let baseURL = "http://localhost:3000"
-
+    @State private var errorMessage: String = ""
+    
+    let baseURL = BaseUrl.lien
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 ScrollView {
                     VStack(spacing: 20) {
                         Spacer(minLength: 30)
-
+                        
                         // Bouton retour et titre
                         HStack {
                             Button(action: onRetour) {
@@ -66,7 +65,14 @@ struct PayerVendeurListeView: View {
                             Spacer()
                         }
                         .padding(.top, 10)
-
+                        
+                        // Message d'erreur inline en rouge
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .padding(.horizontal)
+                        }
+                        
                         // Tableau des ventes
                         VStack(spacing: 0) {
                             HStack(spacing: 0) {
@@ -77,7 +83,7 @@ struct PayerVendeurListeView: View {
                             }
                             .frame(height: 40)
                             .background(Color.gray.opacity(0.2))
-
+                            
                             ForEach(historiqueVentes) { vente in
                                 HStack(spacing: 0) {
                                     cellBody(vente.nomJeu, geometry: geometry)
@@ -90,14 +96,16 @@ struct PayerVendeurListeView: View {
                         .border(Color.black)
                         .frame(width: geometry.size.width * 0.9)
                         .padding(.horizontal, geometry.size.width * 0.05)
-
+                        
                         // Somme totale
                         Text("Somme totale : \(String(format: "%.2f", historiqueVentes.first?.sommeTotaleDue ?? 0)) €")
                             .font(.system(size: 18, weight: .bold))
                             .padding()
-
-                        // Bouton pour payer le vendeur
-                        Button(action: payerVendeur) {
+                        
+                        Button(action: {
+                            errorMessage = ""
+                            payerVendeur()
+                        }) {
                             Text("Payer le vendeur")
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -107,27 +115,34 @@ struct PayerVendeurListeView: View {
                                 .cornerRadius(10)
                         }
                         .padding(.horizontal, 20)
-
+                        
                         Spacer(minLength: 50)
                     }
                 }
             }
-            .onAppear(perform: fetchHistorique)
         }
+        .onAppear(perform: fetchHistorique)
     }
-
+    
     private func fetchHistorique() {
         guard let url = URL(string: "\(baseURL)/historique-vente/\(email)") else {
-            print("URL invalide pour historique")
+            errorMessage = "URL invalide pour historique"
+            scheduleNotification(title: "Erreur", message: errorMessage)
             return
         }
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
-                print("Erreur lors du chargement de l'historique: \(error)")
+                DispatchQueue.main.async {
+                    errorMessage = "Erreur: \(error.localizedDescription)"
+                    scheduleNotification(title: "Erreur", message: errorMessage)
+                }
                 return
             }
             guard let data = data else {
-                print("Aucune donnée reçue")
+                DispatchQueue.main.async {
+                    errorMessage = "Aucune donnée reçue"
+                    scheduleNotification(title: "Erreur", message: errorMessage)
+                }
                 return
             }
             do {
@@ -136,15 +151,18 @@ struct PayerVendeurListeView: View {
                     self.historiqueVentes = decodedVentes
                 }
             } catch {
-                print("Erreur de décodage de l'historique: \(error)")
+                DispatchQueue.main.async {
+                    errorMessage = "Erreur de décodage: \(error)"
+                    scheduleNotification(title: "Erreur", message: errorMessage)
+                }
             }
         }.resume()
     }
-
+    
     private func payerVendeur() {
-        // Préparer l'URL et le corps de la requête pour /payer-vendeur-liste
         guard let url = URL(string: "\(baseURL)/payer-vendeur-liste") else {
-            print("URL invalide pour payer le vendeur")
+            errorMessage = "URL invalide pour payer le vendeur"
+            scheduleNotification(title: "Erreur", message: errorMessage)
             return
         }
         var request = URLRequest(url: url)
@@ -152,36 +170,34 @@ struct PayerVendeurListeView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = ["email": email]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        URLSession.shared.dataTask(with: request) { data, _, error in
             if let error = error {
-                print("Erreur lors du paiement du vendeur: \(error)")
+                DispatchQueue.main.async {
+                    errorMessage = "Erreur lors du paiement: \(error.localizedDescription)"
+                    scheduleNotification(title: "Erreur", message: errorMessage)
+                }
                 return
             }
             if let data = data,
-               let responseJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                print("Réponse du paiement vendeur: \(responseJSON)")
-                // Une fois que le vendeur est payé, vous pouvez rafraîchir l'historique
-                fetchHistorique()
-                scheduleNotification()
+               let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                DispatchQueue.main.async {
+                    scheduleNotification(title: "Succès", message: "Le vendeur a été payé avec succès.")
+                    fetchHistorique()
+                }
             }
         }.resume()
     }
-
-    private func scheduleNotification() {
+    
+    private func scheduleNotification(title: String, message: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Paiement effectué"
-        content.body = "Le vendeur a été payé avec succès."
-        content.sound = .default
-
+        content.title = title
+        content.body = message
+        content.sound = UNNotificationSound.default
+        
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Erreur lors de la notification: \(error.localizedDescription)")
-            }
-        }
+        
+        UNUserNotificationCenter.current().add(request)
     }
     
     private func largeurColonne(_ geometry: GeometryProxy) -> CGFloat {
@@ -210,4 +226,3 @@ struct PayerVendeurListeView_Previews: PreviewProvider {
         PayerVendeurListeView(email: "vendeur@example.com", onRetour: { })
     }
 }
-

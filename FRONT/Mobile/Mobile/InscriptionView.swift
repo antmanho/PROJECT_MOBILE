@@ -1,4 +1,5 @@
 import SwiftUI
+
 struct InscriptionView: View {
     @State private var email: String = ""
     @State private var password: String = ""
@@ -7,41 +8,40 @@ struct InscriptionView: View {
 
     let onMotDePasseOublie: () -> Void // Callback vers MotPasseOublieView
     let onConnexion: () -> Void        // Callback vers ConnexionView
-    // Callback modifié pour recevoir l'email et rediriger vers CheckEmailView
-    let onCheckEmail: (String) -> Void
+    let onCheckEmail: (String) -> Void // Callback pour rediriger vers CheckEmailView
 
     var body: some View {
         VStack {
-            Spacer()
-
-            // 🧩 Zone principale centrée
-            VStack(spacing: 20) {
-
-                // 🔵 Premier cadre (Inscription)
-                VStack {
+            Spacer(minLength: 20)
+            
+            // Conteneur principal avec largeur réduite
+            VStack(spacing: 16) {
+                
+                // Premier cadre (Inscription)
+                VStack(spacing: 12) {
                     Text("INSCRIPTION")
-                        .font(.custom("Bangers", size: 30))
-                        .padding(.bottom, 10)
-
-                    VStack {
+                        .font(.custom("Bangers", size: 26))
+                        .padding(.bottom, 6)
+                    
+                    VStack(spacing: 8) {
                         TextField("Email", text: $email)
-                            .padding()
+                            .padding(8)
                             .background(Color.gray.opacity(0.2))
                             .cornerRadius(5)
                             .autocapitalization(.none)
-
+                        
                         SecureField("Mot de passe", text: $password)
-                            .padding()
+                            .padding(8)
                             .background(Color.gray.opacity(0.2))
                             .cornerRadius(5)
-
+                        
                         SecureField("Confirmation du mot de passe", text: $confirmPassword)
-                            .padding()
+                            .padding(8)
                             .background(Color.gray.opacity(0.2))
                             .cornerRadius(5)
-
+                        
                         Button(action: {
-                            // Vérifier que tous les champs sont remplis et que les mots de passe correspondent
+                            // Vérification des champs
                             guard !email.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
                                 errorMessage = "Veuillez remplir tous les champs"
                                 return
@@ -52,8 +52,8 @@ struct InscriptionView: View {
                             }
                             errorMessage = nil
                             
-                            // Préparer la requête POST vers /api/inscription
-                            guard let url = URL(string: "http://localhost:3000/api/inscription") else {
+                            // Préparation de la requête POST vers /api/inscription
+                            guard let url = URL(string: "\(BaseUrl.lien)/api/inscription") else {
                                 errorMessage = "URL invalide"
                                 return
                             }
@@ -85,11 +85,9 @@ struct InscriptionView: View {
                                     return
                                 }
                                 
-                                // Vérification de la réponse du serveur
                                 if let message = json["message"] as? String {
                                     print("Message serveur : \(message)")
                                     DispatchQueue.main.async {
-                                        // En cas de succès, on appelle le callback en passant l'email
                                         onCheckEmail(email)
                                     }
                                 } else {
@@ -102,43 +100,40 @@ struct InscriptionView: View {
                         }) {
                             Text("S'inscrire")
                                 .foregroundColor(.white)
-                                .padding()
+                                .padding(10)
                                 .frame(maxWidth: .infinity)
                                 .background(Color.gray)
                                 .cornerRadius(5)
                         }
-                        .padding(.top, 10)
-
+                        .padding(.top, 8)
+                        
                         if let errorMessage = errorMessage {
                             Text(errorMessage)
                                 .foregroundColor(.red)
-                                .padding(.top, 5)
+                                .padding(.top, 4)
                         }
                     }
-                    .padding()
-
+                    .padding(10)
+                    
                     DividerView2()
-
-                    // 🔥 Bouton qui ouvre MotPasseOublieView
+                    
                     Button(action: {
                         onMotDePasseOublie()
                     }) {
                         Text("Mot de passe oublié ?")
-                            .foregroundColor(Color.blue)
+                            .foregroundColor(.blue)
                     }
-                    .padding(.top, 10)
+                    .padding(.top, 8)
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
-
-                // 🔵 Deuxième cadre (Lien vers Connexion)
+                .border(Color.black, width: 1)
+                
+                // Deuxième cadre (Lien vers Connexion)
                 VStack {
                     HStack {
                         Text("Vous avez déjà un compte ?")
                             .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-
                         Button(action: {
                             onConnexion()
                         }) {
@@ -146,24 +141,23 @@ struct InscriptionView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 8)
                 }
-                .padding()
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .border(Color.black, width: 2)
-
+                .border(Color.black, width: 1)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.9)
+            .frame(width: UIScreen.main.bounds.width * 0.8) // largeur fixée à 80% de l'écran
             .fixedSize(horizontal: false, vertical: true)
-
+            
             Spacer()
-
+            
             Text("Barbedet Anthony & Delclaud Corentin production | Polytech school | © 2024 Boardland")
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.bottom, 15)
+                .padding(.bottom, 20)
         }
     }
 }
@@ -184,3 +178,4 @@ struct DividerView2: View {
         .padding(.vertical, 2)
     }
 }
+

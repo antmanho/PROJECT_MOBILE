@@ -57,7 +57,7 @@ struct CatalogueView: View {
     @State private var localGames: [Game] = [] // Données chargées localement
     @State private var searchText: String = ""
     
-    let baseImageURL = "http://localhost:3000"
+    let baseImageURL = BaseUrl.lien
     let columns = [GridItem(.adaptive(minimum: 160), spacing: 10)]
     
     var allGames: [Game] {
