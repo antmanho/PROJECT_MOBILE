@@ -1,5 +1,12 @@
 import SwiftUI
 
+// Extension pour cacher le clavier
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
 struct ConnexionView: View {
     @State private var email: String = ""
     @State private var password: String = ""
@@ -152,7 +159,11 @@ struct ConnexionView: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 20)
         }
-        .frame(maxWidth: .infinity, alignment: .center) // Centre le contenu
+        .frame(maxWidth: .infinity, alignment: .center)
+        // Ajout du geste pour cacher le clavier quand on touche en dehors
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
 }
 

@@ -125,6 +125,9 @@ struct MotPasseOublieView: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 18)
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .alert(isPresented: .constant(false)) {  // Pas d'alerte affichée, notifications locales utilisées
             Alert(title: Text("Information"), message: Text(""), dismissButton: .default(Text("OK")))
         }

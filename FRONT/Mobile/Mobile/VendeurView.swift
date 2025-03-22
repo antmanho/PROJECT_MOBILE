@@ -218,6 +218,9 @@ struct VendeurView: View {
                 .padding(.vertical)
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
     
     

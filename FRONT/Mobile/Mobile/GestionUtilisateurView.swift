@@ -159,6 +159,9 @@ struct GestionUtilisateurView: View {
             
             Spacer()
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .background(Color(UIColor.systemGroupedBackground))
         .onAppear {
             fetchUsers()

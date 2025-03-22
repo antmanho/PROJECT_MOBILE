@@ -58,6 +58,9 @@ struct RetraitView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
 }
 

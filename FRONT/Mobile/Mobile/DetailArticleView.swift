@@ -151,6 +151,9 @@ struct DetailArticleView: View {
                 Spacer()
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .onAppear {
             fetchProductDetail()
         }

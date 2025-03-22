@@ -97,6 +97,9 @@ struct PreinscriptionView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .onAppear {
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
                 // Gestion des erreurs ou refus si nécessaire

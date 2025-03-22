@@ -121,6 +121,9 @@ struct PayerVendeurListeView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .onAppear(perform: fetchHistorique)
     }
     

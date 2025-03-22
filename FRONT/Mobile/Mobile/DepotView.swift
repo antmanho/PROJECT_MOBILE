@@ -190,6 +190,9 @@ struct DepotView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .onAppear {
             loadSessions()
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }

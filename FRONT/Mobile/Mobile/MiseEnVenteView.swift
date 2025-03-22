@@ -113,6 +113,9 @@ struct MiseEnVenteView: View {
             }
             Spacer()
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .background(Color(UIColor.systemGray6))
         .onAppear {
             fetchCatalogue()

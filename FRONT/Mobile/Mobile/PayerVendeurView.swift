@@ -59,6 +59,9 @@ struct PayerVendeurView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
 }
 

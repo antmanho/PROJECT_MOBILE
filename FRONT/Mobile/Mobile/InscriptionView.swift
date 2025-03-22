@@ -159,6 +159,9 @@ struct InscriptionView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 20)
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
 }
 

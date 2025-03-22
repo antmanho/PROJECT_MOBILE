@@ -144,6 +144,9 @@ struct CreerSessionView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .onAppear {
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
         }

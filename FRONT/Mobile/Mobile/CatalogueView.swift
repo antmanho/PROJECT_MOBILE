@@ -162,6 +162,9 @@ struct CatalogueView: View {
             }
             Spacer()
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .background(Color(UIColor.systemGray6))
         .onAppear {
             if games.isEmpty {

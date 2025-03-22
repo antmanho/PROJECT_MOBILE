@@ -115,6 +115,9 @@ struct RetraitListeView: View {
             }
             .onAppear(perform: fetchJeux)
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
     
     // Récupération des jeux du vendeur depuis le backend

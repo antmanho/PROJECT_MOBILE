@@ -85,6 +85,9 @@ struct BilanView: View {
                 }
             }
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
     }
     
     // Fonction qui construit l'URL avec les paramètres et appelle le back-end

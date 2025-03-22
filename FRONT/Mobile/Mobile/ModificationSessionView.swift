@@ -234,6 +234,9 @@ struct ModificationSessionView: View {
             
             Spacer()
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .background(Color(UIColor.systemGroupedBackground))
         .onAppear {
             fetchSessions()

@@ -148,6 +148,9 @@ struct CheckEmailView: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 20)
         }
+        .onTapGesture {
+            self.hideKeyboard()
+        }
         .frame(maxWidth: .infinity, alignment: .center)
         .alert(isPresented: .constant(false)) {  // Les notifications locales sont utilisées
             Alert(title: Text("Erreur"), message: Text(errorMessage ?? "Veuillez entrer un code valide"), dismissButton: .default(Text("OK")))
