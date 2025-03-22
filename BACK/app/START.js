@@ -16,15 +16,15 @@ const { sessionMiddleware, sessionInitMiddleware, sessionCheckMiddleware } = req
 const db = require('./INIT-MIDDLEW/DB');
 
 ////HTTPS-------DEBUTT
-//const certPath = path.join(__dirname, '../../../../etc/letsencrypt/live/anthonybarbedet.com/fullchain.pem')
-//const keyPath = path.join(__dirname, '../../../../etc/letsencrypt/live/anthonybarbedet.com/privkey.pem')
+const certPath = path.join(__dirname, '../../../../etc/letsencrypt/live/city-match.online/fullchain.pem')
+const keyPath = path.join(__dirname, '../../../../etc/letsencrypt/live/city-match.online/privkey.pem')
 //
 //
 //    // Lecture des fichiers de certificat et de clé
-//const options = {
-//      key: fs.readFileSync(keyPath),
-//      cert: fs.readFileSync(certPath)
-//    };
+const options = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
 //
 ////HTTPS-------FIN
 
@@ -57,14 +57,14 @@ app.use('/', Gestionnaire);
 app.use('/', Vendeur);
 
 
-app.listen(port, () => {
-    console.log(`Serveur démarré sur le port ${port}`);
-});
+//app.listen(port, () => {
+//    console.log(`Serveur démarré sur le port ${port}`);
+//});
 ////HTTPS
-//const server = https.createServer(options, app);
-//server.listen(port, () => {
-//                  console.log(`Serveur démarré sur le port ${port}`);
-//              });
+const server = https.createServer(options, app);
+server.listen(port, () => {
+                  console.log(`Serveur démarré sur le port ${port}`);
+              });
 
 //-----------------------------------------------------------------------------------
 //     _____ ___ _   _

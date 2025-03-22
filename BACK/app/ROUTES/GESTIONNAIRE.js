@@ -22,15 +22,19 @@ if (!fs.existsSync(directoryPath)) {
     fs.mkdirSync(directoryPath, { recursive: true });
 }
 
-// Configuration de multer
+const destinationPath = path.join(__dirname, '../RESSOURCES/IMAGE');
+console.log("Dossier d'enregistrement :", destinationPath);
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'RESSOURCES/IMAGE'); // R      pertoire de destination
+        cb(null, destinationPath);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Renommer le fichier pou>
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
+
+
 
 const upload = multer({ storage });
 
@@ -671,7 +675,34 @@ module.exports = (db) => {
             res.status(200).json({results});
         });
     });
+    router.get('/api/envente', (req, res) => {
+        console.log("*** /catalogue ***");
 
+        const query = `
+            SELECT
+                Stock.id_stock,
+                Stock.nom_jeu,
+                Stock.Prix_unit,
+                Stock.photo_path,
+                Session.Frais_depot_fixe,
+                Session.Frais_depot_percent,
+                Stock.Prix_unit AS prix_final,
+                Stock.est_en_vente
+            FROM Stock
+            JOIN Session ON Stock.numero_session_actuelle = Session.id_session
+        WHERE est_en_vente = 1
+        `;
+        
+    
+
+        db.query(query, (err, results) => {
+            if (err) {
+                console.error('Erreur lors de la récupération du catalogue:', err);
+                return res.status(500).json({ message: 'Erreur interne du serveur' });
+            }
+            res.status(200).json({results});
+        });
+    });
     return router;
 };
 
