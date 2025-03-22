@@ -59,7 +59,7 @@ struct MiseEnVenteView: View {
 
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(filteredGames.indices, id: \ .self) { index in
+                    ForEach(filteredGames.indices, id: \.self) { index in
                         Button(action: {
                             onGameSelected(filteredGames[index])
                         }) {
@@ -67,7 +67,6 @@ struct MiseEnVenteView: View {
                                 Text(filteredGames[index].nomJeu)
                                     .font(.headline)
                                     .padding(.vertical, 5)
-                                
                                 if let url = URL(string: baseImageURL + filteredGames[index].photoPath) {
                                     AsyncImage(url: url) { phase in
                                         if let image = phase.image {
@@ -76,6 +75,8 @@ struct MiseEnVenteView: View {
                                                 .scaledToFill()
                                                 .frame(height: 150)
                                                 .clipped()
+                                        } else if phase.error != nil {
+                                            Color.red.frame(height: 150)
                                         } else {
                                             Color.gray.frame(height: 150)
                                         }
@@ -83,7 +84,6 @@ struct MiseEnVenteView: View {
                                 } else {
                                     Color.gray.frame(height: 150)
                                 }
-                                
                                 VStack {
                                     Text("N°article : \(filteredGames[index].id)")
                                         .font(.subheadline)
@@ -96,17 +96,18 @@ struct MiseEnVenteView: View {
                                     ))
                                     .toggleStyle(SwitchToggleStyle(tint: .blue))
                                 }
+                                .padding(5)
                             }
-                                .padding(5)
-                                .frame(width: 160)
-                                .background(Color.white)
-                                .cornerRadius(10)
-                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                                .padding(5)
-                            
+                            .frame(width: 160)
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                            .clipped() // Permet de masquer tout contenu débordant
+                            .padding(5)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
+
                 }
                 .padding()
             }

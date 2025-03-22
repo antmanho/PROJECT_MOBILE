@@ -1,5 +1,14 @@
 import SwiftUI
 import Charts
+import Foundation
+
+struct BilanData {
+    let bilanParticulier: Bool
+    let sessionParticuliere: Bool
+    let emailParticulier: String
+    let numeroSession: String
+    let chargesFixes: Double
+}
 
 struct VendeurGrapheView: View {
     let data: BilanData

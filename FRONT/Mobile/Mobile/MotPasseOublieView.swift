@@ -3,15 +3,17 @@ import SwiftUI
 struct MotPasseOublieView: View {
     @State private var email: String = ""
     @State private var showAlert = false
+    @State private var alertMessage = ""
+    
     let onRetourDynamic: () -> Void // 🔁 Retour dynamique vers la dernière page
     let onInscription: () -> Void
 
     var body: some View {
         VStack {
-            // 🔙 Bouton retour bien calé en haut à gauche
+            // Bouton retour en haut à gauche
             HStack {
                 Button(action: {
-                    onRetourDynamic() // 🔥 Retourne dynamiquement vers la dernière page visitée
+                    onRetourDynamic() // Retour vers la dernière page visitée
                 }) {
                     Image("retour")
                         .resizable()
@@ -24,7 +26,6 @@ struct MotPasseOublieView: View {
 
             Spacer()
 
-            // 🧩 Zone principale bien centrée
             VStack(spacing: 20) {
                 VStack(spacing: 15) {
                     Text("RECUPERATION")
@@ -53,11 +54,40 @@ struct MotPasseOublieView: View {
                         .keyboardType(.emailAddress)
 
                     Button(action: {
-                        if email.isEmpty {
+                        guard !email.isEmpty else {
+                            alertMessage = "Veuillez entrer un email valide."
                             showAlert = true
-                        } else {
-                            print("Lien envoyé à : \(email)")
+                            return
                         }
+                        // Préparation de la requête POST vers /mdp_oublie
+                        guard let url = URL(string: "http://localhost:3000/mdp_oublie") else {
+                            alertMessage = "URL invalide."
+                            showAlert = true
+                            return
+                        }
+                        var request = URLRequest(url: url)
+                        request.httpMethod = "POST"
+                        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                        
+                        let body: [String: Any] = ["email": email]
+                        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+                        
+                        URLSession.shared.dataTask(with: request) { data, response, error in
+                            if let error = error {
+                                print("Erreur lors de la récupération du mot de passe: \(error)")
+                                DispatchQueue.main.async {
+                                    alertMessage = "Erreur: \(error.localizedDescription)"
+                                    showAlert = true
+                                }
+                                return
+                            }
+                            // Vous pouvez éventuellement traiter la réponse ici
+                            DispatchQueue.main.async {
+                                alertMessage = "Un lien de réinitialisation du mot de passe a été envoyé à votre adresse."
+                                showAlert = true
+                            }
+                        }.resume()
+                        
                     }) {
                         Text("Récupération mot de passe")
                             .foregroundColor(.white)
@@ -71,14 +101,13 @@ struct MotPasseOublieView: View {
                 .frame(maxWidth: .infinity)
                 .border(Color.black, width: 2)
 
-                // 🔗 Lien vers InscriptionView
+                // Lien vers InscriptionView
                 VStack {
                     HStack {
                         Text("Vous n'avez pas de compte ?")
                             .font(.footnote)
-
                         Button(action: {
-                            onInscription() // 🔥 Redirection vers InscriptionView
+                            onInscription()
                         }) {
                             Text("Inscrivez-vous")
                                 .foregroundColor(.blue)
@@ -101,7 +130,7 @@ struct MotPasseOublieView: View {
                 .padding(.bottom, 15)
         }
         .alert(isPresented: $showAlert) {
-            Alert(title: Text("Erreur"), message: Text("Veuillez entrer un email valide"), dismissButton: .default(Text("OK")))
+            Alert(title: Text("Information"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
     }
 }

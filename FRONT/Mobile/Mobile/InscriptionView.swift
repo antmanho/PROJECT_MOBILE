@@ -1,14 +1,14 @@
 import SwiftUI
-
 struct InscriptionView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
     @State private var errorMessage: String? = nil
 
-    let onMotDePasseOublie: () -> Void // 👈 Callback vers `MotPasseOublieView`
-    let onConnexion: () -> Void // 👈 Callback vers `ConnexionView`
-    let onCheckEmail: () -> Void // 👈 Callback pour `CheckEmailView`
+    let onMotDePasseOublie: () -> Void // Callback vers MotPasseOublieView
+    let onConnexion: () -> Void        // Callback vers ConnexionView
+    // Callback modifié pour recevoir l'email et rediriger vers CheckEmailView
+    let onCheckEmail: (String) -> Void
 
     var body: some View {
         VStack {
@@ -41,15 +41,64 @@ struct InscriptionView: View {
                             .cornerRadius(5)
 
                         Button(action: {
-                            if email.isEmpty || password.isEmpty || confirmPassword.isEmpty {
+                            // Vérifier que tous les champs sont remplis et que les mots de passe correspondent
+                            guard !email.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
                                 errorMessage = "Veuillez remplir tous les champs"
-                            } else if password != confirmPassword {
-                                errorMessage = "Les mots de passe ne correspondent pas"
-                            } else {
-                                errorMessage = nil
-                                print("Inscription réussie avec : \(email)")
-                                onCheckEmail() // 🔥 Redirection vers `CheckEmailView`
+                                return
                             }
+                            guard password == confirmPassword else {
+                                errorMessage = "Les mots de passe ne correspondent pas"
+                                return
+                            }
+                            errorMessage = nil
+                            
+                            // Préparer la requête POST vers /api/inscription
+                            guard let url = URL(string: "http://localhost:3000/api/inscription") else {
+                                errorMessage = "URL invalide"
+                                return
+                            }
+                            var request = URLRequest(url: url)
+                            request.httpMethod = "POST"
+                            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                            
+                            let body = [
+                                "email": email,
+                                "password": password,
+                                "confirmPassword": confirmPassword
+                            ]
+                            
+                            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+                            
+                            URLSession.shared.dataTask(with: request) { data, response, error in
+                                if let error = error {
+                                    DispatchQueue.main.async {
+                                        errorMessage = "Erreur : \(error.localizedDescription)"
+                                    }
+                                    return
+                                }
+                                
+                                guard let data = data,
+                                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                                    DispatchQueue.main.async {
+                                        errorMessage = "Réponse invalide du serveur"
+                                    }
+                                    return
+                                }
+                                
+                                // Vérification de la réponse du serveur
+                                if let message = json["message"] as? String {
+                                    print("Message serveur : \(message)")
+                                    DispatchQueue.main.async {
+                                        // En cas de succès, on appelle le callback en passant l'email
+                                        onCheckEmail(email)
+                                    }
+                                } else {
+                                    DispatchQueue.main.async {
+                                        errorMessage = "Inscription échouée"
+                                    }
+                                }
+                            }.resume()
+                            
                         }) {
                             Text("S'inscrire")
                                 .foregroundColor(.white)
@@ -59,7 +108,6 @@ struct InscriptionView: View {
                                 .cornerRadius(5)
                         }
                         .padding(.top, 10)
-
 
                         if let errorMessage = errorMessage {
                             Text(errorMessage)
@@ -71,9 +119,9 @@ struct InscriptionView: View {
 
                     DividerView2()
 
-                    // 🔥 Bouton qui ouvre `MotPasseOublieView`
+                    // 🔥 Bouton qui ouvre MotPasseOublieView
                     Button(action: {
-                        onMotDePasseOublie() // 🔥 Callback activé
+                        onMotDePasseOublie()
                     }) {
                         Text("Mot de passe oublié ?")
                             .foregroundColor(Color.blue)
@@ -91,9 +139,8 @@ struct InscriptionView: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
-                        // 🔥 Bouton qui ouvre `ConnexionView`
                         Button(action: {
-                            onConnexion() // 🔥 Callback activé
+                            onConnexion()
                         }) {
                             Text("Connectez-vous")
                                 .foregroundColor(.blue)
@@ -121,7 +168,6 @@ struct InscriptionView: View {
     }
 }
 
-// 🟠 **DividerView identique à ConnexionView**
 struct DividerView2: View {
     var body: some View {
         HStack {

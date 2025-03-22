@@ -3,20 +3,18 @@ import SwiftUI
 struct PayerVendeurView: View {
     @State private var emailVendeur: String = ""
     
-    // Cette closure est appelée lorsqu'on appuie sur le bouton
+    // Cette closure sera appelée pour naviguer vers PayerVendeurListeView avec l'email en paramètre.
     let onAfficherHistorique: (String) -> Void
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Image de fond occupant tout l'écran
                 Image("sport")
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
                 
-                // ScrollView pour gérer le défilement
                 ScrollView {
                     VStack {
                         Spacer(minLength: 40)
@@ -25,7 +23,7 @@ struct PayerVendeurView: View {
                             Text("PAYER VENDEUR")
                                 .font(.system(size: 24, weight: .bold))
                                 .padding(.top, 10)
-
+                            
                             // Champ email vendeur
                             TextField("Email du vendeur", text: $emailVendeur)
                                 .textFieldStyle(.roundedBorder)
@@ -64,11 +62,10 @@ struct PayerVendeurView: View {
     }
 }
 
-// MARK: - Preview
 struct PayerVendeurView_Previews: PreviewProvider {
     static var previews: some View {
-        PayerVendeurView(onAfficherHistorique: { email in
+        PayerVendeurView { email in
             print("Afficher l'historique pour : \(email)")
-        })
+        }
     }
 }

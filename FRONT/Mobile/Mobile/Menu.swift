@@ -10,7 +10,9 @@ struct Menu: View {
 
     // Ajout pour retenir l'email du vendeur (paiement)
     @State private var payerEmail: String = ""
-    @State private var bilanData: BilanData? = nil
+
+    @State private var bilanData: BilanGraphData? = nil
+
 
     // États pour la navigation interne
     @State private var selectedGame: Int? = nil
@@ -125,22 +127,45 @@ struct Menu: View {
                                     selectedView = "ConnexionView"
                                     activeButton = "Se connecter"
                                 },
-                                onCheckEmail: {
+                                onCheckEmail: { email in
+                                    // Par exemple, stocker l'email si besoin ou le transmettre à CheckEmailView
+                                    print("Inscription réussie pour l'email : \(email)")
+                                    // Vous pouvez alors rediriger vers CheckEmailView en passant cet email
+                                    // Exemple :
                                     selectedView = "CheckEmailView"
-                                    activeButton = "S’inscrire"
+                                    activeButton = nil
+                                    // Assurez-vous que votre CheckEmailView accepte un paramètre email
                                 }
                             )
 
+
                         case "CheckEmailView":
                             CheckEmailView(
-                                email: "exemple@mail.com",
+                                email: retraitEmail, // Assurez-vous que retraitEmail contient bien l'email utilisé lors de l'inscription
                                 onRetour: {
                                     selectedView = "InscriptionView"
                                 },
                                 onInvité: {
                                     selectedView = "Menu"
+                                },
+                                onVerificationSuccess: { role in
+                                    // Mise à jour de X selon le rôle
+                                    switch role.lowercased() {
+                                    case "vendeur":
+                                        X = "V"
+                                    case "admin":
+                                        X = "A"
+                                    case "gestionnaire":
+                                        X = "G"
+                                    default:
+                                        X = "0"
+                                    }
+                                    // Redirection après vérification réussie (par exemple vers Accueil)
+                                    activeButton = "Accueil"
+                                    selectedView = "Accueil"
                                 }
                             )
+
 
                         case "MotPasseOublieView":
                             MotPasseOublieView(
@@ -170,10 +195,10 @@ struct Menu: View {
                         case "Utilisateurs":
                             GestionUtilisateurView()
                         case "Achat":
-                            EnregistrerAchatView { idStock, quantite in
+                            EnregistrerAchatView(onConfirmerAchat: { idStock, quantite in
                                 print("Achat confirmé : ID Stock \(idStock), Quantité \(quantite)")
-                                // Tu peux aussi mettre ici une logique pour enregistrer dans la base ou autre
-                            }
+                                // Logique additionnelle ici si nécessaire
+                            })
 
                         case "Gestionnaire":
                             GestionnaireView(selectedView: $selectedView)
@@ -187,6 +212,8 @@ struct Menu: View {
                         case "RetraitListe":
                             RetraitListeView(email: retraitEmail, onRetour: {
                                 self.selectedView = "Retrait"
+                            }, onInvité: {
+                                self.selectedView = "Menu" // ou toute autre logique souhaitée
                             })
 
                         case "Payer":
@@ -205,7 +232,7 @@ struct Menu: View {
                                 bilanData = data
                                 selectedView = "BilanGraphe"
                             })
-                    
+
                         case "BilanGraphe":
                             if let data = bilanData {
                                 BilanGrapheView(data: data, onRetour: {
@@ -214,6 +241,7 @@ struct Menu: View {
                             } else {
                                 Text("Aucune donnée à afficher")
                             }
+
 
                         default:
                             Text("Sélectionnez une option")

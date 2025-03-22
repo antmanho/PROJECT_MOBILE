@@ -1,40 +1,36 @@
 import SwiftUI
 
-// Le RetraitView reçoit une closure 'onAfficherListe' au lieu d'un NavigationLink
 struct RetraitView: View {
     @State private var emailParticulier: String = ""
 
-    // Cette closure est appelée quand on veut "naviguer" vers la liste
+    // Closure appelée lorsque l'utilisateur souhaite afficher la liste
     let onAfficherListe: (String) -> Void
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Image de fond occupant tout l'écran
                 Image("sport")
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
                 
-                // ScrollView pour gérer le défilement
                 ScrollView {
                     VStack {
-                        Spacer(minLength: 40) // Espace en haut
+                        Spacer(minLength: 40)
                         
-                        // ---------- FORMULAIRE ----------
                         VStack(spacing: 10) {
                             Text("RETRAIT D'UN JEU")
                                 .font(.system(size: 24, weight: .bold))
                                 .padding(.top, 10)
                             
-                            // Champ pour l'email
+                            // Champ de saisie pour l'email
                             TextField("Email particulier", text: $emailParticulier)
                                 .textFieldStyle(.roundedBorder)
                                 .padding(.horizontal)
                                 .keyboardType(.emailAddress)
                             
-                            // Au lieu de NavigationLink, on appelle la closure
+                            // Bouton qui appelle la closure avec l'email saisi
                             Button {
                                 onAfficherListe(emailParticulier)
                             } label: {
@@ -48,7 +44,7 @@ struct RetraitView: View {
                             .padding(.horizontal)
                         }
                         .padding()
-                        .frame(maxWidth: 300)  // Même largeur que dans DepotView
+                        .frame(maxWidth: 300)
                         .background(Color.white)
                         .cornerRadius(15)
                         .shadow(radius: 5)
@@ -57,7 +53,7 @@ struct RetraitView: View {
                                 .stroke(Color.black, lineWidth: 2)
                         )
                         
-                        Spacer(minLength: 60) // Espace en bas
+                        Spacer(minLength: 60)
                     }
                 }
             }
@@ -65,12 +61,8 @@ struct RetraitView: View {
     }
 }
 
-// MARK: - Preview
 struct RetraitView_Previews: PreviewProvider {
     static var previews: some View {
-        // On fournit une closure "bouchon" (stub) qui ne fait rien
-        RetraitView(onAfficherListe: { _ in
-            // Ne rien faire dans la Preview
-        })
+        RetraitView(onAfficherListe: { _ in })
     }
 }

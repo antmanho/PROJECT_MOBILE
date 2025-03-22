@@ -3,16 +3,20 @@ import SwiftUI
 struct CheckEmailView: View {
     @State private var codeRecu: String = ""
     @State private var showAlert = false
+    @State private var errorMessage: String? = nil
+
     let email: String
-    let onRetour: () -> Void // 🔥 Retour uniquement vers InscriptionView
-    let onInvité: () -> Void // 🔥 Redirection vers mode invité
+    let onRetour: () -> Void    // Retour uniquement vers InscriptionView
+    let onInvité: () -> Void    // Redirection vers le mode invité
+    // Callback appelé lorsque la vérification est réussie et qui fournit le rôle de l'utilisateur
+    let onVerificationSuccess: (String) -> Void
 
     var body: some View {
         VStack {
-            // 🔙 Bouton retour en haut à gauche (RETOUR → InscriptionView)
+            // Bouton retour en haut à gauche
             HStack {
                 Button(action: {
-                    onRetour() // 🔥 Retourne uniquement vers InscriptionView
+                    onRetour() // Retour vers InscriptionView
                 }) {
                     Image("retour")
                         .resizable()
@@ -52,11 +56,83 @@ struct CheckEmailView: View {
                         .keyboardType(.numberPad)
 
                     Button(action: {
-                        if codeRecu.isEmpty {
+                        guard !codeRecu.isEmpty else {
+                            errorMessage = "Veuillez entrer un code valide"
                             showAlert = true
-                        } else {
-                            print("Vérification réussie pour le code : \(codeRecu)")
+                            return
                         }
+                        // Appel au back pour vérifier le code
+                        guard let url = URL(string: "http://localhost:3000/verification-email") else {
+                            errorMessage = "URL invalide"
+                            showAlert = true
+                            return
+                        }
+                        var request = URLRequest(url: url)
+                        request.httpMethod = "POST"
+                        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                        let bodyDict: [String: Any] = [
+                            "email": email,
+                            "code_recu": codeRecu
+                        ]
+                        request.httpBody = try? JSONSerialization.data(withJSONObject: bodyDict)
+                        
+                        URLSession.shared.dataTask(with: request) { data, response, error in
+                            if let error = error {
+                                DispatchQueue.main.async {
+                                    errorMessage = "Erreur: \(error.localizedDescription)"
+                                    showAlert = true
+                                }
+                                return
+                            }
+                            guard let data = data,
+                                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                                DispatchQueue.main.async {
+                                    errorMessage = "Réponse invalide du serveur."
+                                    showAlert = true
+                                }
+                                return
+                            }
+                            
+                            // Si le serveur renvoie un message, nous considérons que la vérification est réussie
+                            if let message = json["message"] as? String {
+                                print("Réponse verification-email: \(message)")
+                                // Ensuite, appel à /api/user-info pour obtenir le rôle
+                                guard let infoUrl = URL(string: "http://localhost:3000/api/user-info") else {
+                                    DispatchQueue.main.async {
+                                        errorMessage = "URL invalide pour user-info"
+                                        showAlert = true
+                                    }
+                                    return
+                                }
+                                URLSession.shared.dataTask(with: infoUrl) { infoData, infoResponse, infoError in
+                                    if let infoError = infoError {
+                                        DispatchQueue.main.async {
+                                            errorMessage = "Erreur user-info: \(infoError.localizedDescription)"
+                                            showAlert = true
+                                        }
+                                        return
+                                    }
+                                    guard let infoData = infoData,
+                                          let infoJson = try? JSONSerialization.jsonObject(with: infoData) as? [String: Any],
+                                          let role = infoJson["role"] as? String else {
+                                        DispatchQueue.main.async {
+                                            errorMessage = "Impossible de récupérer le rôle."
+                                            showAlert = true
+                                        }
+                                        return
+                                    }
+                                    DispatchQueue.main.async {
+                                        // Appel du callback avec le rôle obtenu
+                                        onVerificationSuccess(role)
+                                    }
+                                }.resume()
+                            } else {
+                                DispatchQueue.main.async {
+                                    errorMessage = "Code de vérification invalide."
+                                    showAlert = true
+                                }
+                            }
+                        }.resume()
                     }) {
                         Text("Vérifier")
                             .foregroundColor(.white)
@@ -81,7 +157,8 @@ struct CheckEmailView: View {
                 .padding(.bottom, 15)
         }
         .alert(isPresented: $showAlert) {
-            Alert(title: Text("Erreur"), message: Text("Veuillez entrer un code valide"), dismissButton: .default(Text("OK")))
+            Alert(title: Text("Erreur"), message: Text(errorMessage ?? "Veuillez entrer un code valide"), dismissButton: .default(Text("OK")))
         }
     }
 }
+
