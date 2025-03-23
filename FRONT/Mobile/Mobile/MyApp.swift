@@ -27,9 +27,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             if let error = error {
                 print("Erreur de permission: \(error.localizedDescription)")
             } else if granted {
-                print("Permission accordée ✅")
+                print("Permission accordée ")
             } else {
-                print("Permission refusée ❌")
+                print("Permission refusée ")
             }
         }
         
