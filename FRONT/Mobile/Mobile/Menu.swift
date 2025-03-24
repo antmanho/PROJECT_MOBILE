@@ -2,7 +2,7 @@ import SwiftUI
 
 struct Menu: View {
     @State private var selectedView: String = "ConnexionView"
-    @State private var X: String = "A" // Simule le rôle Admin
+    @State private var X: String = "0" // Simule le rôle Admin
     @State private var activeButton: String? = "Se connecter"
     
     // Ajout pour retenir l'email du particulier
