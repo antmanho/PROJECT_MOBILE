@@ -2,27 +2,21 @@ import Foundation
 import SwiftUI
 import Combine
 
-/// ViewModel pour la gestion du menu et de la navigation
 class MenuViewModel: ObservableObject {
     // MARK: - Propriétés publiées
     
-    /// Vue actuellement sélectionnée
     @Published var selectedView: String = "ConnexionView"
     
     /// Rôle de l'utilisateur actuel (était X dans le code original)
     @Published var userRole: UserRole = .invite
-    
-    /// Bouton actuellement actif
     @Published var activeButton: String? = "Se connecter"
     
-    /// Données pour les différentes vues
     @Published var retraitEmail: String = ""
     @Published var payerEmail: String = ""
     @Published var bilanData: BilanGraphData? = nil
     @Published var selectedGame: Int? = nil
     @Published var catalogueGames: [Game] = []
     
-    /// État des vues précédentes (pour la navigation)
     @Published var lastViewBeforeMotPasseOublie: String = "ConnexionView"
     @Published var lastViewBeforeDetailArticle: String = "CatalogueView"
     

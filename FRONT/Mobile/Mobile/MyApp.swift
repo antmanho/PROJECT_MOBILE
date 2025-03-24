@@ -1,6 +1,5 @@
 import SwiftUI
-import UserNotifications  // Pour gérer les notifications
-
+import UserNotifications 
 @main
 struct MyApp: App {
     
@@ -9,7 +8,7 @@ struct MyApp: App {
     
     var body: some Scene {
         WindowGroup {
-            // Votre première vue, ici on met DepotView
+            // première vue
             Menu()
         }
     }
