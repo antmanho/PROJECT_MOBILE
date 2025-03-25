@@ -54,15 +54,12 @@ Le projet est organisé en deux grandes parties :
 
 1. **Cloner le dépôt :**  
    `git clone <url_du_dépôt>`
-2. **Installation des modules pour le BACK :**  
+2. **Installer les dépendances pour le BACK :**  
  `npm install express express-session nodemailer body-parser axios mysql path uuid cors fs https`
-3. **Installer les dépendances :**  
-   - Pour le front-end (Angular)  
-   - Pour le back-end (Node.js)
-4. **Configurer la base de données :**  
+3. **Configurer la base de données :**  
    Modifier les paramètres de connexion dans le fichier de configuration.
-5. **Lancer l’application :**  
-   Démarrer les serveurs front-end et back-end selon les instructions.
+4. **Lancer l’application :**  
+   Démarrer le serveur back-endeet build ton projet Xcode avec le FRONT.
 
 
 Placez-vous dans le dossier BACK puis exécutez :
