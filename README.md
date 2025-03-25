@@ -59,7 +59,7 @@ Le projet est organisé en deux grandes parties :
 3. **Configurer la base de données :**  
    Modifier les paramètres de connexion dans le fichier de configuration.
 4. **Lancer l’application :**  
-   Démarrer le serveur back-endeet build ton projet Xcode avec le FRONT.
+   Démarrer le serveur back-end et build ton projet Xcode avec le FRONT.
 
 
 Placez-vous dans le dossier BACK puis exécutez :
