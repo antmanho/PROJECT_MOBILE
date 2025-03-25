@@ -54,17 +54,22 @@ Le projet est organisé en deux grandes parties :
 
 1. **Cloner le dépôt :**  
    `git clone <url_du_dépôt>`
-2. **Installer les dépendances :**  
+2. **Installation des modules pour le BACK :**  
+ `npm install express express-session nodemailer body-parser axios mysql path uuid cors fs https`
+3. **Installer les dépendances :**  
    - Pour le front-end (Angular)  
    - Pour le back-end (Node.js)
-3. **Configurer la base de données :**  
+4. **Configurer la base de données :**  
    Modifier les paramètres de connexion dans le fichier de configuration.
-4. **Lancer l’application :**  
+5. **Lancer l’application :**  
    Démarrer les serveurs front-end et back-end selon les instructions.
+
+
+Placez-vous dans le dossier BACK puis exécutez :
 
 ## Contact
 
-Pour toute question ou suggestion, veuillez contacter [Votre Nom] à l'adresse [votre.email@example.com].
+Pour toute question ou suggestion, veuillez contacter [Barbedet] à l'adresse [barbedetanthony@gmail.com].
 
 ---
 
